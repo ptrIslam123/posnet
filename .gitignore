@@ -1,0 +1,5 @@
+build/
+.vscode/
+.idea/
+CMakeLists.txt.user*
+*.o
