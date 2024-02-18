@@ -1,6 +1,6 @@
-#include "ethernet_builder.h"
+#include "frame-builder/ethernet_builder.h"
 
-#include "src/utils/sock_addr_convertor.h"
+#include "utils/sock_addr_convertor.h"
 
 #include <stdexcept>
 #include <sstream>

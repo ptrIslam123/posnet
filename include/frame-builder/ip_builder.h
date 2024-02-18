@@ -1,7 +1,7 @@
 #ifndef VS_IP_BUILDER_H
 #define VS_IP_BUILDER_H
 
-#include "src/frame-viewers/ip_viewer.h"
+#include "include/frame-viewers/ip_viewer.h"
 
 #include <string_view>
 

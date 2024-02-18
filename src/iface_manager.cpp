@@ -1,7 +1,7 @@
-#include "iface_manager.h"
+#include "net-iface/iface_manager.h"
 
-#include "src/utils/system_error.h"
-#include "src/utils/sock_addr_convertor.h"
+#include "utils/system_error.h"
+#include "utils/sock_addr_convertor.h"
 
 #include <iostream>
 #include <iomanip>

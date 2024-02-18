@@ -1,7 +1,7 @@
 #ifndef VS_UDP_BUILDER_H
 #define VS_UDP_BUILDER_H
 
-#include "src/frame-viewers/udp_viewer.h"
+#include "include/frame-viewers/udp_viewer.h"
 
 #include <sstream>
 #include <stdexcept>

@@ -1,6 +1,6 @@
-#include "ip_viewer.h"
+#include "frame-viewers/ip_viewer.h"
 
-#include "src/utils/sock_addr_convertor.h"
+#include "utils/sock_addr_convertor.h"
 
 #include <unordered_map>
 

@@ -1,6 +1,6 @@
-#include "ethernet_viewer.h"
+#include "frame-viewers/ethernet_viewer.h"
 
-#include "src/utils/sock_addr_convertor.h"
+#include "utils/sock_addr_convertor.h"
 
 #include <arpa/inet.h>
 
@@ -28,11 +28,6 @@ m_ethernetFrame(reinterpret_cast<HeaderStructType*>(
 m_rawFrame(rawFrame)
 {}
 
-EthernetViewer::EthernetViewer(const RawFrameViewType rawFrame):
-m_ethernetFrame(reinterpret_cast<HeaderStructType*>(rawFrame.data())),
-m_rawFrame(rawFrame)
-{}
-
 std::string EthernetViewer::getDestMacAddressAsStr()
 {
     return posnet::utils::MacAddrToStr(m_ethernetFrame->h_dest);
@@ -46,6 +41,7 @@ std::string EthernetViewer::getSourceMacAddressAsStr()
 EthernetViewer::ProtocolType EthernetViewer::getProtocol()
 {
     switch (ntohs(m_ethernetFrame->h_proto)) {
+        using ProtocolType = EthernetViewer::ProtocolType;
         case ETH_P_IP: return ProtocolType::IP;
         case ETH_P_ARP: return ProtocolType::ARP;
         case ETH_P_RARP: return ProtocolType::RARP;
@@ -92,6 +88,7 @@ std::ostream& EthernetViewer::operator<<(std::ostream& os) const
     os << "\tsource-mac-address=" << getSourceMacAddressAsStr() << "\n";
     os << "\tprotocol=";
     switch (getProtocol()) {
+        using ProtocolType = EthernetViewer::ProtocolType; 
         case ProtocolType::IP: {
             os << "IP";
             break;

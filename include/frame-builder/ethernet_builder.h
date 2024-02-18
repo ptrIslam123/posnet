@@ -1,7 +1,7 @@
 #ifndef VS_ETHERNET_BUILDER_H
 #define VS_ETHERNET_BUILDER_H
 
-#include "src/frame-viewers/ethernet_viewer.h"
+#include "include/frame-viewers/ethernet_viewer.h"
 
 #include <string_view>
 #include <span>

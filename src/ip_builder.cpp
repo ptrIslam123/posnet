@@ -1,8 +1,8 @@
-#include "ip_builder.h"
+#include "frame-builder/ip_builder.h"
 
-#include "src/frame-viewers/ethernet_viewer.h"
-#include "src/utils/sock_addr_convertor.h"
-#include "src/utils/algorithms.h"
+#include "frame-viewers/ethernet_viewer.h"
+#include "utils/sock_addr_convertor.h"
+#include "utils/algorithms.h"
 
 #include <stdexcept>
 #include <sstream>

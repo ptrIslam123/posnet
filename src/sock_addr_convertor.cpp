@@ -1,6 +1,6 @@
-#include "sock_addr_convertor.h"
+#include "utils/sock_addr_convertor.h"
 
-#include "src/utils/scoped_lock.h"
+#include "utils/scoped_lock.h"
 
 #include <sstream>
 #include <iomanip>

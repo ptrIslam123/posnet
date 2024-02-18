@@ -1,6 +1,6 @@
-#include "udp_viewer.h"
+#include "frame-viewers/udp_viewer.h"
 
-#include "ethernet_viewer.h"
+#include "frame-viewers/ethernet_viewer.h"
 
 #include <arpa/inet.h>
 

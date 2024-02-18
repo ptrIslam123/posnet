@@ -12,15 +12,15 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-#include "net-iface/iface_manager.h"
-#include "utils/system_error.h"
+#include "include/net-iface/iface_manager.h"
+#include "include/utils/system_error.h"
 
-#include "frame-viewers/ethernet_viewer.h"
-#include "frame-viewers/ip_viewer.h"
-#include "frame-viewers/udp_viewer.h"
-#include "frame-viewers/tcp_viewer.h"
-#include "frame-viewers/icmp_viewer.h"
-#include "frame-viewers/arp_viewer.h"
+#include "include/frame-viewers/ethernet_viewer.h"
+#include "include/frame-viewers/ip_viewer.h"
+#include "include/frame-viewers/udp_viewer.h"
+#include "include/frame-viewers/tcp_viewer.h"
+#include "include/frame-viewers/icmp_viewer.h"
+#include "include/frame-viewers/arp_viewer.h"
 
 using ConstRawFrameViewType = posnet::EthernetViewer::ConstRawFrameViewType;
 using RawFrameViewType = posnet::EthernetViewer::RawFrameViewType;

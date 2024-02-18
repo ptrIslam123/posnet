@@ -39,7 +39,6 @@ public:
     };
 
     explicit EthernetViewer(ConstRawFrameViewType rawFrame);
-    explicit EthernetViewer(RawFrameViewType rawFrame);
 
     std::string getDestMacAddressAsStr();
     std::string getSourceMacAddressAsStr();

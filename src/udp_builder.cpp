@@ -1,8 +1,8 @@
-#include "udp_builder.h"
+#include "frame-builder/udp_builder.h"
 
-#include "src/frame-viewers/ip_viewer.h"
-#include "src/frame-viewers/ethernet_viewer.h"
-#include "src/utils/algorithms.h"
+#include "frame-viewers/ip_viewer.h"
+#include "frame-viewers/ethernet_viewer.h"
+#include "utils/algorithms.h"
 
 #include <sstream>
 #include <cstring>
