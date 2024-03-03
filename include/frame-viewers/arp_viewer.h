@@ -1,7 +1,8 @@
 #ifndef VS_ARP_VIEWER_H
 #define VS_ARP_VIEWER_H
 
-#include "ethernet_viewer.h"
+#include "include/base_frame.h"
+#include "include/frame-viewers/ethernet_viewer.h"
 
 #include <string>
 #include <string_view>
@@ -28,9 +29,20 @@ namespace posnet {
  * The tha (Target Hardware Address) field contains the hardware address of the intended receiver, and the tpa (Target Protocol Address) 
  * field contains the protocol address of the intended receiver.
  */
-class ArpViewer final {
+class ArpViewer final : public BaseFrame {
 public:
-    struct ArpHeader;
+    struct ArpHeader {
+        uint16_t hardwareType;
+        uint16_t protoType;
+        uint8_t hardwareLen;
+        uint8_t protoLen;
+        uint16_t opcode;
+        uint8_t senderMac[6];
+        uint8_t senderIp[4];
+        uint8_t targetMac[6];
+        uint8_t targetIp[4];
+    };
+    static constexpr unsigned int DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES = sizeof(struct ArpHeader);
     using RawFrameViewType = EthernetViewer::RawFrameViewType;
     using ConstRawFrameViewType = EthernetViewer::ConstRawFrameViewType;
     using HeaderStructType = struct ArpHeader;
@@ -55,7 +67,7 @@ public:
         Undefined,
     };
 
-    explicit ArpViewer(const EthernetViewer& ethernetViewer);
+    explicit ArpViewer(EthernetViewer ethernetViewer);
     explicit ArpViewer(RawFrameViewType rawFrame);
     explicit ArpViewer(ConstRawFrameViewType rawFrame);
 
@@ -69,7 +81,8 @@ public:
     std::string getTargetMacAddressAsStr();
     std::string getSenderIpAddressAsStr();
     std::string getTargetIpAddressAsStr();
-
+    std::uint8_t* getFrameHeaderStart();
+    
     HardwareType getHardwareType() const;
     std::string_view getHardwareTypeAsStr() const;
     ProtocolType getProtocolType() const;
@@ -84,8 +97,7 @@ public:
     std::ostream& operator<<(std::ostream& os) const;
 
 private:
-    HeaderStructType* m_arpFrame;
-    ConstRawFrameViewType m_rawFrame;
+    HeaderStructType* m_frame;
 };
 
 std::ostream& operator<<(std::ostream& os, const ArpViewer& arpViewer);

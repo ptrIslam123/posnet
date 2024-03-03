@@ -1,7 +1,8 @@
 #ifndef VS_ICMP_VIEWER_H
 #define VS_ICMP_VIEWER_H
 
-#include "ip_viewer.h"
+#include "include/base_frame.h"
+#include "include/frame-viewers/ip_viewer.h"
 
 #include <ostream>
 #include <string>
@@ -23,8 +24,9 @@ namespace posnet {
  * un: A union that contains various fields depending on the type of the ICMP message. 
  * For example, for ICMP_ECHO and ICMP_ECHOREPLY, it contains the identifier and sequence number.
  */
-class IcmpViewer final {
+class IcmpViewer final : public BaseFrame {
 public:
+    static constexpr unsigned int DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES = sizeof(struct icmphdr);
     using RawFrameViewType = IpViewer::RawFrameViewType;
     using ConstRawFrameViewType = IpViewer::ConstRawFrameViewType;
     using HeaderStructType = struct icmphdr;
@@ -72,7 +74,7 @@ public:
         Undefined
     };
 
-    explicit IcmpViewer(const IpViewer& ipViewer);
+    explicit IcmpViewer(IpViewer ipViewer);
     explicit IcmpViewer(RawFrameViewType rawFrame);
     explicit IcmpViewer(ConstRawFrameViewType rawFrame);
 
@@ -80,23 +82,22 @@ public:
     std::string_view getTypeAsStr();
     PackageCode getCode();
     std::string_view getCodeAsStr();
-    int getCheckSum();
-    int getId();
-    int getSequenceNumber();
+    unsigned int getCheckSum();
+    unsigned int getId();
+    unsigned int getSequenceNumber();
 
     PackageType getType() const;
     std::string_view getTypeAsStr() const;
     PackageCode getCode() const;
     std::string_view getCodeAsStr() const;
-    int getCheckSum() const;
-    int getId() const;
-    int getSequenceNumber() const;
+    unsigned int getCheckSum() const;
+    unsigned int getId() const;
+    unsigned int getSequenceNumber() const;
 
     std::ostream& operator<<(std::ostream& os) const;
 
 private:
-    HeaderStructType* m_icmpFrame;
-    ConstRawFrameViewType m_rawFrame;
+    HeaderStructType* m_frame;
 };
 
 std::ostream& operator<<(std::ostream& os, const IcmpViewer& icmpViewer);

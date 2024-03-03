@@ -6,64 +6,66 @@
 
 namespace posnet {
     
-UdpViewer::UdpViewer(const IpViewer& ipViewer):
-m_udpFrame(reinterpret_cast<HeaderStructType*>(
-    const_cast<RawFrameViewType::value_type*>(
-        ipViewer.getAsRawFrame().data() + sizeof(EthernetViewer::HeaderStructType) + ipViewer.getHeaderLengthInBytes()))),
-m_rawFrame(ipViewer.getAsRawFrame())
+UdpViewer::UdpViewer(IpViewer ipViewer):
+BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(ipViewer.getStart()), ipViewer.getSize()),
+m_frame(reinterpret_cast<HeaderStructType*>(
+    ipViewer.getFrameHeaderStart() + ipViewer.getHeaderLengthInBytes()))
 {}
 
 UdpViewer::UdpViewer(const RawFrameViewType rawFrame):
-m_udpFrame(reinterpret_cast<HeaderStructType*>(
-       rawFrame.data() + sizeof(EthernetViewer::HeaderStructType) + IpViewer(rawFrame).getHeaderLengthInBytes())),
-m_rawFrame(rawFrame)
+BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(rawFrame.data()), DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES),
+m_frame(reinterpret_cast<HeaderStructType*>(rawFrame.data()))
 {}
 
 UdpViewer::UdpViewer(const ConstRawFrameViewType rawFrame):
-m_udpFrame(reinterpret_cast<HeaderStructType*>(
-    const_cast<RawFrameViewType::value_type*>(
-        rawFrame.data() + sizeof(EthernetViewer::HeaderStructType) + IpViewer(rawFrame).getHeaderLengthInBytes()))),
-m_rawFrame(rawFrame)
+BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(rawFrame.data()), DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES),
+m_frame(reinterpret_cast<HeaderStructType*>(
+    const_cast<RawFrameViewType::value_type*>(rawFrame.data())))
 {}
 
 UdpViewer::PortType UdpViewer::getSourcePort()
 {
-    return ntohs(m_udpFrame->source);
+    return ntohs(m_frame->source);
 }
 
 UdpViewer::PortType UdpViewer::getDestPort()
 {
-    return ntohs(m_udpFrame->dest);
+    return ntohs(m_frame->dest);
 }
 
 unsigned int UdpViewer::getUdpDataGramLength()
 {
-    return ntohs(m_udpFrame->len);
+    return ntohs(m_frame->len);
 }
 
 unsigned int UdpViewer::getCheckSum()
 {
-    return ntohs(m_udpFrame->check);
+    return ntohs(m_frame->check);
 }
 
 UdpViewer::PortType UdpViewer::getSourcePort() const
 {
-    return ntohs(m_udpFrame->source);
+    return ntohs(m_frame->source);
 }
 
 UdpViewer::PortType UdpViewer::getDestPort() const
 {
-    return ntohs(m_udpFrame->dest);
+    return ntohs(m_frame->dest);
 }
 
 unsigned int UdpViewer::getUdpDataGramLength() const
 {
-    return ntohs(m_udpFrame->len);
+    return ntohs(m_frame->len);
 }
 
 unsigned int UdpViewer::getCheckSum() const
 {
-    return ntohs(m_udpFrame->check);
+    return ntohs(m_frame->check);
+}
+
+std::uint8_t* UdpViewer::getFrameHeaderStart()
+{
+    return reinterpret_cast<std::uint8_t*>(m_frame);
 }
 
 std::ostream& UdpViewer::operator<<(std::ostream& os) const

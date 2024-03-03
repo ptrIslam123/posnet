@@ -1,13 +1,15 @@
 #ifndef VS_IP_BUILDER_H
 #define VS_IP_BUILDER_H
 
+#include "include/base_frame.h"
 #include "include/frame-viewers/ip_viewer.h"
 
 #include <string_view>
+#include <ostream>
 
 namespace posnet {
     
-class IpBuilder final {
+class IpBuilder final : public BaseFrame {
 public:
     static constexpr unsigned int DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES = IpViewer::DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES;
     static constexpr unsigned int DEFAULT_FRAME_TOS_VALUE = IpViewer::DEFAULT_FRAME_TOS_VALUE;
@@ -17,7 +19,7 @@ public:
     static constexpr unsigned int DEFAULT_FRAME_TTL_VALUE = IpViewer::DEFAULT_FRAME_TTL_VALUE;
     static constexpr unsigned int DEFAULT_FRAME_ID_VALUE = IpViewer::DEFAULT_FRAME_ID_VALUE;
 
-    static constexpr std::string_view LOCAL_HOST_ID_ADDRESS = IpViewer::LOCAL_HOST_ID_ADDRESS;
+    static constexpr std::string_view LOCAL_HOST_IP_ADDRESS = IpViewer::LOCAL_HOST_IP_ADDRESS;
 
     using RawFrameVieType = IpViewer::RawFrameViewType;
     using ConstRawVieType = IpViewer::ConstRawFrameViewType;
@@ -25,7 +27,7 @@ public:
     using ProtocolType = IpViewer::ProtocolType;
     using VersionType = IpViewer::VersionType;
 
-    explicit IpBuilder(RawFrameVieType rawFrame);
+    explicit IpBuilder();
 
     IpBuilder& setVersion(VersionType version) && = delete;
     IpBuilder& setProtocol(ProtocolType protocol) && = delete;
@@ -60,10 +62,17 @@ public:
     unsigned int getDefaultCheckSum();
     unsigned int getDefaultCheckSum() const;
 
+    std::ostream& operator<<(std::ostream& os) const;
+    std::ostream& operator<<(std::ostream& os);
+
 private:
-    HeaderStructType* m_frame;
-    ConstRawVieType m_rawFrame;
+    HeaderStructType m_frame;
 };
+
+std::ostream& operator<<(std::ostream& os, const IpBuilder& ipBuilder);
+std::ostream& operator<<(std::ostream& os, IpBuilder& ipBuilder);
+
+IpBuilder MakeDefaultIpBuilder();
 
 } //! namespace posnet
 

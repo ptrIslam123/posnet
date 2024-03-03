@@ -1,7 +1,8 @@
 #ifndef VS_ETHERNET_VIEWER_H
 #define VS_ETHERNET_VIEWER_H
 
-#include <span>
+#include "include/base_frame.h"
+
 #include <string>
 #include <string_view>
 #include <ostream>
@@ -24,11 +25,11 @@ namespace posnet {
  * For example, if the value is 0x0800, it indicates that the payload is an IP packet. If the value is 0x0806, it indicates that the payload is an ARP packet. 
  * Other values are used for other types of encapsulated protocols.
  */
-class EthernetViewer final {
+class EthernetViewer final : public BaseFrame {
 public:
-    static constexpr unsigned int DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES = 14;
-    using RawFrameViewType = std::span<unsigned char>; 
-    using ConstRawFrameViewType = std::span<const unsigned char>;
+    static constexpr unsigned int DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES = sizeof(struct ethhdr);
+    using RawFrameViewType = BaseFrame::RawFrameViewType; 
+    using ConstRawFrameViewType = BaseFrame::ConstRawFrameViewType;
     using HeaderStructType = struct ethhdr;
 
     enum class ProtocolType {
@@ -50,14 +51,12 @@ public:
     ProtocolType getProtocol() const;
     std::string_view getProtocolAsStr() const;
 
-    ConstRawFrameViewType getAsRawFrame();
-    ConstRawFrameViewType getAsRawFrame() const;
+    std::uint8_t* getFrameHeaderStart();
 
     std::ostream& operator<<(std::ostream& os) const;
 
 private:
-    HeaderStructType *m_ethernetFrame;
-    ConstRawFrameViewType m_rawFrame;
+    HeaderStructType *m_frame;
 };
 
 std::ostream& operator<<(std::ostream& os, const EthernetViewer& ethernetViewer);

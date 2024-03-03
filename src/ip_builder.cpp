@@ -1,28 +1,33 @@
-#include "frame-builder/ip_builder.h"
+#include "include/frame-builder/ip_builder.h"
 
-#include "frame-viewers/ethernet_viewer.h"
-#include "utils/sock_addr_convertor.h"
-#include "utils/algorithms.h"
+#include "include/frame-viewers/ethernet_viewer.h"
+#include "include/frame-viewers/ip_viewer.h"
+
+#include "include/utils/sock_addr_convertor.h"
+#include "include/utils/algorithms.h"
 
 #include <stdexcept>
 #include <sstream>
+#include <cstring>
 
 namespace posnet {
     
-IpBuilder::IpBuilder(const RawFrameVieType rawFrame):
-m_frame(reinterpret_cast<HeaderStructType*>(rawFrame.data() + sizeof(EthernetViewer::HeaderStructType))),
-m_rawFrame(rawFrame)
-{}
+IpBuilder::IpBuilder():
+BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(&m_frame), DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES),
+m_frame()
+{
+    std::memset(&m_frame, 0, sizeof(HeaderStructType));
+}
 
 IpBuilder& IpBuilder::setVersion(const VersionType version) &
 {
     switch (version) {
         case VersionType::V4: {
-            m_frame->version = 4;
+            m_frame.version = 4;
             break;
         }
         case VersionType::V6: {
-            m_frame->version = 6;
+            m_frame.version = 6;
             break;
         }
         default:
@@ -37,15 +42,15 @@ IpBuilder& IpBuilder::setProtocol(const ProtocolType protocol) &
 {
     switch (protocol) {
         case ProtocolType::TCP: {
-            m_frame->protocol = IPPROTO_TCP;
+            m_frame.protocol = IPPROTO_TCP;
             break;
         }
         case ProtocolType::UDP: {
-            m_frame->protocol = IPPROTO_UDP;
+            m_frame.protocol = IPPROTO_UDP;
             break;
         }
         case ProtocolType::ICMP: {
-            m_frame->protocol = IPPROTO_ICMP;
+            m_frame.protocol = IPPROTO_ICMP;
             break;
         }
         default:
@@ -58,13 +63,13 @@ IpBuilder& IpBuilder::setProtocol(const ProtocolType protocol) &
 
 IpBuilder& IpBuilder::setTypeOfService(const unsigned int tos) &
 {
-    m_frame->tos = tos;
+    m_frame.tos = tos;
     return *this;
 }
 
 IpBuilder& IpBuilder::setHeaderLengthInBytes(const unsigned int length) &
 {
-    m_frame->ihl = length / 4;
+    m_frame.ihl = length / 4;
     return *this;
 }
 
@@ -76,13 +81,13 @@ IpBuilder& IpBuilder::setTotalLength(const unsigned int length) &
     Чтобы вычислить tot_len, вы должны сложить длину заголовка IP (который обычно составляет 20 байт без опций) и длину данных, 
     которые следуют за IP-заголовком. Длина данных указывается в октетах, поэтому вам нужно умножить ее на 4, чтобы получить длину в байтах.
     */
-    m_frame->tot_len = htons(length);
+    m_frame.tot_len = htons(length);
     return *this;
 }
 
 IpBuilder& IpBuilder::setId(const unsigned int id) &
 {
-    m_frame->id = htons(id);
+    m_frame.id = htons(id);
     return *this;
 }
 
@@ -114,19 +119,19 @@ IpBuilder& IpBuilder::setFragmentOffset(const bool needToFragmentPackage, const 
         value |= 0x4000; // set "Don't Fragment"(DF) flag value
     }
 
-    m_frame->frag_off = htons(value);
+    m_frame.frag_off = htons(value);
     return *this;
 }
 
 IpBuilder& IpBuilder::setTTL(const unsigned int ttl) &
 {
-    m_frame->ttl =  ttl;
+    m_frame.ttl =  ttl;
     return *this;
 }
 
 IpBuilder& IpBuilder::setCheckSum(const unsigned int checkSum) &
 {
-    m_frame->check = htons(checkSum);
+    m_frame.check = htons(checkSum);
     return *this;
 }
 
@@ -134,7 +139,7 @@ IpBuilder& IpBuilder::setSourceIpAddress(const std::string_view ipAddr) &
 {
     const auto result = posnet::utils::StrToIpAddr(ipAddr);
     if (result) {
-        m_frame->saddr = *result;
+        m_frame.saddr = *result;
     } else {
         std::stringstream ss;
         ss << "Could not set source ip-address for=" << ipAddr << ". Invalid ip-address";
@@ -147,7 +152,7 @@ IpBuilder& IpBuilder::setDestIpAddress(const std::string_view ipAddr) &
 {
     const auto result = posnet::utils::StrToIpAddr(ipAddr);
     if (result) {
-        m_frame->daddr = *result;
+        m_frame.daddr = *result;
     } else {
          std::stringstream ss;
         ss << "Could not set destination ip-address for=" << ipAddr << ". Invalid ip-address";
@@ -167,15 +172,46 @@ unsigned int IpBuilder::getDefaultCheckSum()
         Закончите перед полем контрольной суммы в IP-заголовке.
     */
     return posnet::utils::CalcChecksum(
-        ConstRawVieType{ reinterpret_cast<const std::uint8_t*>(m_rawFrame.data() + sizeof(EthernetViewer::HeaderStructType)), sizeof(HeaderStructType) }
+        ConstRawVieType{ reinterpret_cast<const std::uint8_t*>(&m_frame), sizeof(HeaderStructType) }
     );
 }
 
 unsigned int IpBuilder::getDefaultCheckSum() const
 {
-    return posnet::utils::CalcChecksum(
-        ConstRawVieType{ reinterpret_cast<const std::uint8_t*>(m_rawFrame.data() + sizeof(EthernetViewer::HeaderStructType)), sizeof(HeaderStructType) }
+     return posnet::utils::CalcChecksum(
+        ConstRawVieType{ reinterpret_cast<const std::uint8_t*>(&m_frame), sizeof(HeaderStructType) }
     );
+}
+
+std::ostream& IpBuilder::operator<<(std::ostream& os) const
+{
+    return os << IpViewer(getAsRawFrameView());
+}
+
+std::ostream& IpBuilder::operator<<(std::ostream& os)
+{
+    return os << IpViewer(getAsRawFrameView());
+}
+
+std::ostream& operator<<(std::ostream& os, const IpBuilder& ipBuilder)
+{
+    return ipBuilder.operator<<(os);
+}
+
+std::ostream& operator<<(std::ostream& os, IpBuilder& ipBuilder)
+{
+    return ipBuilder.operator<<(os);
+}
+
+IpBuilder MakeDefaultIpBuilder()
+{
+    IpBuilder ipBuilder;
+    ipBuilder.setTypeOfService(IpBuilder::DEFAULT_FRAME_TOS_VALUE)
+            .setHeaderLengthInBytes(IpBuilder::DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES)
+            .setId(IpBuilder::DEFAULT_FRAME_ID_VALUE)
+            //.setFragmentOffset(IpBuilder::DEFAULT_FRAME_FRAGMENT_FLAG_VALUE, IpBuilder::DEFAULT_FRAME_FRAGMENT_OFFSET_VALUE)
+            .setTTL(IpBuilder::DEFAULT_FRAME_TTL_VALUE);
+    return ipBuilder;
 }
 
 } //! namespace posnet

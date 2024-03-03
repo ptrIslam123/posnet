@@ -66,9 +66,9 @@ void DisablePromiscuousMode(const std::string_view ifaceName, const int socket)
     }
 }
 
-std::vector<posnet::IFaceManager::Configuration> GetConfigs(const int socket)
+std::vector<posnet::IFaceConfiguration> GetConfigs(const int socket)
 {
-    using Configuration = posnet::IFaceManager::Configuration;
+    using Configuration = posnet::IFaceConfiguration;
 
     std::array<char, 1024> buffer = {0};
     std::vector<Configuration> result;
@@ -90,7 +90,6 @@ std::vector<posnet::IFaceManager::Configuration> GetConfigs(const int socket)
 
         // Get MAC address
         if (ioctl(socket, SIOCGIFHWADDR, it) == 0) {
-            //std::span<uint8_t> addr(it->ifr_hwaddr.sa_data, 6); // it->ifr_hwaddr.sa_data
             conf.setMacAddress(
                         posnet::utils::MacAddrToStr(it->ifr_hwaddr)
             );
@@ -136,9 +135,9 @@ std::vector<posnet::IFaceManager::Configuration> GetConfigs(const int socket)
     return result;
 }
 
-void SetConfig(const int socket, const posnet::IFaceManager::Configuration& config)
+void SetConfig(const int socket, const posnet::IFaceConfiguration& config)
 {
-    using Configuration = posnet::IFaceManager::Configuration;
+    using Configuration = posnet::IFaceConfiguration;
 
     struct ifreq ifr;
     std::memset(&ifr, 0, sizeof(ifr));
@@ -239,26 +238,26 @@ IFaceManager::~IFaceManager()
     m_socket = 0;
 }
 
-void IFaceManager::setConfig(const Configuration& config)
+void IFaceManager::setConfig(const IFaceConfiguration& config)
 {
     assert(m_socket > 0);
     return SetConfig(m_socket, config);
 }
 
 
-void IFaceManager::setConfig(const Configuration& config) const
+void IFaceManager::setConfig(const IFaceConfiguration& config) const
 {
     assert(m_socket > 0);
     return SetConfig(m_socket, config);
 }
 
-std::vector<IFaceManager::Configuration> IFaceManager::getConfigs()
+std::vector<IFaceConfiguration> IFaceManager::getConfigs()
 {
     assert(m_socket > 0);
     return GetConfigs(m_socket);
 }
 
-std::vector<IFaceManager::Configuration> IFaceManager::getConfigs() const
+std::vector<IFaceConfiguration> IFaceManager::getConfigs() const
 {
     assert(m_socket > 0);
     return GetConfigs(m_socket);
@@ -307,7 +306,7 @@ void IFaceManager::disablePromiscuousMode(const std::string_view ifaceName) cons
 bool IFaceManager::isIFacePresent(const std::string_view ifaceName)
 {
     const auto configs = getConfigs();
-    const auto it = std::find_if(configs.cbegin(), configs.cend(), [ifaceName](const Configuration& config) {
+    const auto it = std::find_if(configs.cbegin(), configs.cend(), [ifaceName](const IFaceConfiguration& config) {
         return (config.getName() && *config.getName() == ifaceName);
     });
 
@@ -317,7 +316,7 @@ bool IFaceManager::isIFacePresent(const std::string_view ifaceName)
 bool IFaceManager::isIFacePresent(const std::string_view ifaceName) const
 {
     const auto configs = getConfigs();
-    const auto it = std::find_if(configs.cbegin(), configs.cend(), [ifaceName](const Configuration& config) {
+    const auto it = std::find_if(configs.cbegin(), configs.cend(), [ifaceName](const IFaceConfiguration& config) {
         return (config.getName() && *config.getName() == ifaceName);
     });
     
@@ -325,7 +324,7 @@ bool IFaceManager::isIFacePresent(const std::string_view ifaceName) const
 }
 
 
-std::ostream& IFaceManager::Configuration::operator<<(std::ostream& os) const
+std::ostream& IFaceConfiguration::operator<<(std::ostream& os) const
 {
     os << "Net-Iface conf {" << "\n";
     os << "\tname=" << (m_name ? *m_name : "None") << "\n";
@@ -374,122 +373,122 @@ std::ostream& IFaceManager::Configuration::operator<<(std::ostream& os) const
     return os;
 }
 
-std::ostream& operator<<(std::ostream& os, const IFaceManager::Configuration& config)
+std::ostream& operator<<(std::ostream& os, const IFaceConfiguration& config)
 {
     return config.operator<<(os);
 }
 
-std::optional<std::string_view> IFaceManager::Configuration::getName()
+std::optional<std::string_view> IFaceConfiguration::getName()
 {
     return m_name;
 }
 
-std::optional<IFaceManager::AddressType> IFaceManager::Configuration::getMacAddress()
+std::optional<IFaceConfiguration::AddressType> IFaceConfiguration::getMacAddress()
 {
     return m_macAddr;
 }
 
-std::optional<IFaceManager::AddressType> IFaceManager::Configuration::getIpAddress()
+std::optional<IFaceConfiguration::AddressType> IFaceConfiguration::getIpAddress()
 {
     return m_ipAddr;
 }
 
-std::optional<IFaceManager::AddressType> IFaceManager::Configuration::getNetMaskAddress()
+std::optional<IFaceConfiguration::AddressType> IFaceConfiguration::getNetMaskAddress()
 {
     return m_netMaskAddr;
 }
 
-std::optional<IFaceManager::AddressType> IFaceManager::Configuration::getBroadcastAddress()
+std::optional<IFaceConfiguration::AddressType> IFaceConfiguration::getBroadcastAddress()
 {
     return m_broadcastAddr;
 }
 
-std::optional<IFaceManager::IndexType> IFaceManager::Configuration::getIndex()
+std::optional<IFaceConfiguration::IndexType> IFaceConfiguration::getIndex()
 {
     return m_index;
 }
 
-std::optional<IFaceManager::MTUType> IFaceManager::Configuration::getMTU()
+std::optional<IFaceConfiguration::MTUType> IFaceConfiguration::getMTU()
 {
     return m_mtu;
 }
 
-std::optional<IFaceManager::Configuration::Status> IFaceManager::Configuration::getStatus()
+std::optional<IFaceConfiguration::Status> IFaceConfiguration::getStatus()
 {
     return m_status;
 }
 
-std::optional<std::string_view> IFaceManager::Configuration::getName() const
+std::optional<std::string_view> IFaceConfiguration::getName() const
 {
     return m_name;
 }
 
-std::optional<IFaceManager::AddressType> IFaceManager::Configuration::getMacAddress() const
+std::optional<IFaceConfiguration::AddressType> IFaceConfiguration::getMacAddress() const
 {
     return m_macAddr;
 }
 
-std::optional<IFaceManager::AddressType> IFaceManager::Configuration::getIpAddress() const
+std::optional<IFaceConfiguration::AddressType> IFaceConfiguration::getIpAddress() const
 {
     return m_ipAddr;
 }
 
-std::optional<IFaceManager::AddressType> IFaceManager::Configuration::getNetMaskAddress() const
+std::optional<IFaceConfiguration::AddressType> IFaceConfiguration::getNetMaskAddress() const
 {
     return m_netMaskAddr;
 }
 
-std::optional<IFaceManager::AddressType> IFaceManager::Configuration::getBroadcastAddress() const
+std::optional<IFaceConfiguration::AddressType> IFaceConfiguration::getBroadcastAddress() const
 {
     return m_broadcastAddr;
 }
 
-std::optional<IFaceManager::IndexType> IFaceManager::Configuration::getIndex() const
+std::optional<IFaceConfiguration::IndexType> IFaceConfiguration::getIndex() const
 {
     return m_index;
 }
 
-std::optional<IFaceManager::MTUType> IFaceManager::Configuration::getMTU() const
+std::optional<IFaceConfiguration::MTUType> IFaceConfiguration::getMTU() const
 {
     return m_mtu;
 }
 
-std::optional<IFaceManager::Configuration::Status> IFaceManager::Configuration::getStatus() const
+std::optional<IFaceConfiguration::Status> IFaceConfiguration::getStatus() const
 {
     return m_status;
 }
 
-IFaceManager::Configuration& IFaceManager::Configuration::setName(const std::string_view name) &
+IFaceConfiguration& IFaceConfiguration::setName(const std::string_view name) &
 {
     m_name = std::string(name);
     return *this;
 }
 
-IFaceManager::Configuration& IFaceManager::Configuration::setMacAddress(const AddressType& addr) &
+IFaceConfiguration& IFaceConfiguration::setMacAddress(const AddressType& addr) &
 {
     m_macAddr = addr;
     return *this;
 }
 
-IFaceManager::Configuration& IFaceManager::Configuration::setIpAddress(const AddressType& addr) &
+IFaceConfiguration& IFaceConfiguration::setIpAddress(const AddressType& addr) &
 {
     m_ipAddr = addr;
     return *this;
 }
 
-IFaceManager::Configuration& IFaceManager::Configuration::setNetMaskAddress(const AddressType& addr) &
+IFaceConfiguration& IFaceConfiguration::setNetMaskAddress(const AddressType& addr) &
 {
     m_netMaskAddr = addr;
     return *this;
 }
 
-IFaceManager::Configuration& IFaceManager::Configuration::setBroadcastAddress(const AddressType& addr) &
+IFaceConfiguration& IFaceConfiguration::setBroadcastAddress(const AddressType& addr) &
 {
     m_broadcastAddr = addr;
     return *this;
 }
 
-IFaceManager::Configuration& IFaceManager::Configuration::setIndex(const IndexType index) &
+IFaceConfiguration& IFaceConfiguration::setIndex(const IndexType index) &
 {
     if (!m_index) {
         m_index = index;
@@ -499,13 +498,13 @@ IFaceManager::Configuration& IFaceManager::Configuration::setIndex(const IndexTy
     return *this;
 }
 
-IFaceManager::Configuration& IFaceManager::Configuration::setMTU(const MTUType mtu) &
+IFaceConfiguration& IFaceConfiguration::setMTU(const MTUType mtu) &
 {
     m_mtu = mtu;
     return *this;
 }
 
-IFaceManager::Configuration& IFaceManager::Configuration::setStatus(const Status status) &
+IFaceConfiguration& IFaceConfiguration::setStatus(const Status status) &
 {
     m_status = status;
     return *this;

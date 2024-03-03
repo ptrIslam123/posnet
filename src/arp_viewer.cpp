@@ -77,41 +77,26 @@ std::string_view OpcodeTypeToStr(const posnet::ArpViewer::OpcodeType opcode)
 
 namespace posnet {
 
-struct ArpViewer::ArpHeader {
-    uint16_t hardwareType;
-    uint16_t protoType;
-    uint8_t hardwareLen;
-    uint8_t protoLen;
-    uint16_t opcode;
-    uint8_t senderMac[6];
-    uint8_t senderIp[4];
-    uint8_t targetMac[6];
-    uint8_t targetIp[4];
-};
-
-ArpViewer::ArpViewer(const EthernetViewer& ethernetViewer):
-m_arpFrame(reinterpret_cast<HeaderStructType*>(
-    const_cast<RawFrameViewType::value_type*>(
-        ethernetViewer.getAsRawFrame().data() + sizeof(EthernetViewer::HeaderStructType)))),
-m_rawFrame(ethernetViewer.getAsRawFrame())
+ArpViewer::ArpViewer(EthernetViewer ethernetViewer):
+BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(ethernetViewer.getStart()), ethernetViewer.getSize()),
+m_frame(reinterpret_cast<HeaderStructType*>(
+    ethernetViewer.getFrameHeaderStart() + EthernetViewer::DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES))
 {}
 
 ArpViewer::ArpViewer(const RawFrameViewType rawFrame):
-m_arpFrame(reinterpret_cast<HeaderStructType*>(
-        rawFrame.data() + sizeof(EthernetViewer::HeaderStructType))),
-m_rawFrame(rawFrame)
+BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(rawFrame.data()), DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES),
+m_frame(reinterpret_cast<HeaderStructType*>(rawFrame.data()))
 {}
 
 ArpViewer::ArpViewer(const ConstRawFrameViewType rawFrame):
-m_arpFrame(reinterpret_cast<HeaderStructType*>(
-    const_cast<RawFrameViewType::value_type*>(
-        rawFrame.data() + sizeof(EthernetViewer::HeaderStructType)))),
-m_rawFrame(rawFrame)
+BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(rawFrame.data()), DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES),
+m_frame(reinterpret_cast<HeaderStructType*>(
+    const_cast<RawFrameViewType::value_type*>(rawFrame.data())))
 {}
 
 ArpViewer::HardwareType ArpViewer::getHardwareType()
 {
-    return ExtractHardwareType(ntohs(m_arpFrame->hardwareType));
+    return ExtractHardwareType(ntohs(m_frame->hardwareType));
 }
 
 std::string_view ArpViewer::getHardwareTypeAsStr()
@@ -121,7 +106,7 @@ std::string_view ArpViewer::getHardwareTypeAsStr()
 
 ArpViewer::ProtocolType ArpViewer::getProtocolType()
 {
-    return ExtractProtocolType(ntohs(m_arpFrame->protoType));
+    return ExtractProtocolType(ntohs(m_frame->protoType));
 }
 
 std::string_view ArpViewer::getProtocolTypeAsStr()
@@ -131,7 +116,7 @@ std::string_view ArpViewer::getProtocolTypeAsStr()
 
 ArpViewer::OpcodeType ArpViewer::getOpcode()
 {
-    return ExtractOpcodeType(ntohs(m_arpFrame->opcode));
+    return ExtractOpcodeType(ntohs(m_frame->opcode));
 }
 
 std::string_view ArpViewer::getOpcodeAsStr()
@@ -141,27 +126,27 @@ std::string_view ArpViewer::getOpcodeAsStr()
 
 std::string ArpViewer::getSenderMacAddressAsStr()
 {
-    return posnet::utils::MacAddrToStr(m_arpFrame->senderMac);
+    return posnet::utils::MacAddrToStr(m_frame->senderMac);
 }
 
 std::string ArpViewer::getTargetMacAddressAsStr()
 {
-    return posnet::utils::MacAddrToStr(m_arpFrame->targetMac);
+    return posnet::utils::MacAddrToStr(m_frame->targetMac);
 }
 
 std::string ArpViewer::getSenderIpAddressAsStr()
 {
-    return posnet::utils::IpAddrToStr(m_arpFrame->senderIp);
+    return posnet::utils::IpAddrToStr(m_frame->senderIp);
 }
 
 std::string ArpViewer::getTargetIpAddressAsStr()
 {
-    return posnet::utils::IpAddrToStr(m_arpFrame->targetIp);
+    return posnet::utils::IpAddrToStr(m_frame->targetIp);
 }
 
 ArpViewer::HardwareType ArpViewer::getHardwareType() const
 {
-    return ExtractHardwareType(ntohs(m_arpFrame->hardwareType));
+    return ExtractHardwareType(ntohs(m_frame->hardwareType));
 }
 
 std::string_view ArpViewer::getHardwareTypeAsStr() const
@@ -171,7 +156,7 @@ std::string_view ArpViewer::getHardwareTypeAsStr() const
 
 ArpViewer::ProtocolType ArpViewer::getProtocolType() const
 {
-    return ExtractProtocolType(ntohs(m_arpFrame->protoType));
+    return ExtractProtocolType(ntohs(m_frame->protoType));
 }
 
 std::string_view ArpViewer::getProtocolTypeAsStr() const
@@ -181,7 +166,7 @@ std::string_view ArpViewer::getProtocolTypeAsStr() const
 
 ArpViewer::OpcodeType ArpViewer::getOpcode() const
 {
-    return ExtractOpcodeType(ntohs(m_arpFrame->opcode));
+    return ExtractOpcodeType(ntohs(m_frame->opcode));
 }
 
 std::string_view ArpViewer::getOpcodeAsStr() const
@@ -191,22 +176,27 @@ std::string_view ArpViewer::getOpcodeAsStr() const
 
 std::string ArpViewer::getSenderMacAddressAsStr() const
 {
-    return posnet::utils::MacAddrToStr(m_arpFrame->senderMac);
+    return posnet::utils::MacAddrToStr(m_frame->senderMac);
 }
 
 std::string ArpViewer::getTargetMacAddressAsStr() const
 {
-    return posnet::utils::MacAddrToStr(m_arpFrame->targetMac);
+    return posnet::utils::MacAddrToStr(m_frame->targetMac);
 }
 
 std::string ArpViewer::getSenderIpAddressAsStr() const
 {
-    return posnet::utils::IpAddrToStr(m_arpFrame->senderIp);
+    return posnet::utils::IpAddrToStr(m_frame->senderIp);
 }
 
 std::string ArpViewer::getTargetIpAddressAsStr() const
 {
-    return posnet::utils::IpAddrToStr(m_arpFrame->targetIp);
+    return posnet::utils::IpAddrToStr(m_frame->targetIp);
+}
+
+std::uint8_t* ArpViewer::getFrameHeaderStart()
+{
+    return reinterpret_cast<std::uint8_t*>(m_frame);
 }
 
 std::ostream& ArpViewer::operator<<(std::ostream& os) const

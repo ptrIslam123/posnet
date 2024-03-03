@@ -1,8 +1,10 @@
 #ifndef VS_UDP_BUILDER_H
 #define VS_UDP_BUILDER_H
 
+#include "include/base_frame.h"
 #include "include/frame-viewers/udp_viewer.h"
 
+#include <ostream>
 #include <sstream>
 #include <stdexcept>
 #include <cstring>
@@ -10,7 +12,7 @@
 
 namespace posnet {
     
-class UdpBuilder final {
+class UdpBuilder final : public BaseFrame {
 public:
     static constexpr auto DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES = UdpViewer::DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES;
 
@@ -19,29 +21,32 @@ public:
     using HeaderStructType = UdpViewer::HeaderStructType;
     using PortType = UdpViewer::PortType;
 
-    explicit UdpBuilder(RawFrameViewType rawFrame);
+    explicit UdpBuilder();
 
     UdpBuilder& setSourcePort(PortType port) && = delete;
     UdpBuilder& setDestPort(PortType port) && = delete;
     UdpBuilder& setUdpDataGramLength(unsigned int length) && = delete;
     UdpBuilder& setCheckSum(unsigned int checkSum) && = delete;
-    UdpBuilder& setPayload(std::span<std::int8_t> payload) && = delete;
 
     UdpBuilder& setSourcePort(PortType port) &;
     UdpBuilder& setDestPort(PortType port) &;
     UdpBuilder& setUdpDataGramLength(unsigned int length) &;
     UdpBuilder& setCheckSum(unsigned int checkSum) &;
-    UdpBuilder& setPayload(std::span<std::int8_t> payload) &;
-    UdpBuilder& setPayload(std::span<std::uint8_t> payload) &;
 
     unsigned int getDefaultCheckSum();
     unsigned int getDefaultCheckSum() const;
 
+    std::ostream& operator<<(std::ostream& os) const;
+    std::ostream& operator<<(std::ostream& os);
+
 private:
-    HeaderStructType* m_frame;
-    ConstRawFrameViewType m_rawFrame;
-    std::size_t m_payloadSize;
+    HeaderStructType m_frame;
 };
+
+std::ostream& operator<<(std::ostream& os, const UdpBuilder& udpBuilder);
+std::ostream& operator<<(std::ostream& os, UdpBuilder& udpBuilder);
+
+UdpBuilder MakeDefaultUdpBuilder();
 
 } // namespace posnet
 

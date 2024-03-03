@@ -1,7 +1,8 @@
 #ifndef VS_UPD_VIEWER_H
 #define VS_UPD_VIEWER_H
 
-#include "ip_viewer.h"
+#include "include/base_frame.h"
+#include "include/frame-viewers/ip_viewer.h"
 
 #include <ostream>
 
@@ -20,16 +21,16 @@ namespace posnet {
  * 
  * check: This is the checksum of the UDP header and data. It is used for error-checking of the UDP header and data.
  */
-class UdpViewer final {
+class UdpViewer final : public BaseFrame {
 public:
-    static constexpr auto DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES = 8;
+    static constexpr auto DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES = sizeof(struct udphdr);
 
     using RawFrameViewType = IpViewer::RawFrameViewType;
     using ConstRawFrameViewType = IpViewer::ConstRawFrameViewType;
     using HeaderStructType = struct udphdr;
     using PortType = int;
 
-    explicit UdpViewer(const IpViewer& ipViewer);
+    explicit UdpViewer(IpViewer ipViewer);
     explicit UdpViewer(RawFrameViewType rawFrame);
     explicit UdpViewer(ConstRawFrameViewType rawFrame);
 
@@ -43,11 +44,12 @@ public:
     unsigned int getUdpDataGramLength() const;
     unsigned int getCheckSum() const;
 
+    std::uint8_t* getFrameHeaderStart();
+
     std::ostream& operator<<(std::ostream& os) const;
 
 private:
-    HeaderStructType* m_udpFrame;
-    ConstRawFrameViewType m_rawFrame;
+    HeaderStructType* m_frame;
 };
     
 std::ostream& operator<<(std::ostream& os, const UdpViewer& updViewer);

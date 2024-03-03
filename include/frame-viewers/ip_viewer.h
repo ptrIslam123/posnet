@@ -1,7 +1,8 @@
 #ifndef VS_IP_VIEWER_H
 #define VS_IP_VIEWER_H
 
-#include "ethernet_viewer.h"
+#include "include/base_frame.h"
+#include "include/frame-viewers/ethernet_viewer.h"
 
 #include <string>
 #include <string_view>
@@ -41,9 +42,9 @@ namespace posnet {
  * 
  * daddr: This is a 32-bit field that specifies the destination IP address.
  */
-class IpViewer final {
+class IpViewer final : public BaseFrame {
 public:
-    static constexpr unsigned int DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES = 20;
+    static constexpr unsigned int DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES = sizeof(struct iphdr);
     static constexpr unsigned int DEFAULT_FRAME_TOS_VALUE = 0;
     static constexpr unsigned int MAX_FRAME_FRAGMENT_OFFSET_VALUE = 8191;
     static constexpr unsigned int DEFAULT_FRAME_FRAGMENT_OFFSET_VALUE = 0;
@@ -51,7 +52,7 @@ public:
     static constexpr unsigned int DEFAULT_FRAME_TTL_VALUE = 64;
     static constexpr unsigned int DEFAULT_FRAME_ID_VALUE = 0;
 
-    static constexpr std::string_view LOCAL_HOST_ID_ADDRESS = "127.0.0.1";
+    static constexpr std::string_view LOCAL_HOST_IP_ADDRESS = "127.0.0.1";
 
     using RawFrameViewType = EthernetViewer::RawFrameViewType;
     using ConstRawFrameViewType = EthernetViewer::ConstRawFrameViewType;
@@ -68,7 +69,7 @@ public:
         V4, V6
     };
 
-    explicit IpViewer(const EthernetViewer& ethernetViewer);
+    explicit IpViewer(EthernetViewer ethernetViewer);
     explicit IpViewer(RawFrameViewType rawFrame);
     explicit IpViewer(ConstRawFrameViewType rawFrame);
 
@@ -98,14 +99,13 @@ public:
     unsigned int getCheckSum() const;
     std::string getSourceIpAddressAsStr() const;
     std::string getDestIpAddressAsStr() const;
-    ConstRawFrameViewType getAsRawFrame();
-    ConstRawFrameViewType getAsRawFrame() const;
+    
+    std::uint8_t* getFrameHeaderStart();
 
     std::ostream& operator<<(std::ostream& os) const;
     
 private:
-    HeaderStructType* m_ipFrame;
-    ConstRawFrameViewType m_rawFrame;
+    HeaderStructType* m_frame;
 };
 
 std::ostream& operator<<(std::ostream& os, const IpViewer& ipViewer);

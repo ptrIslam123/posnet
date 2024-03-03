@@ -36,23 +36,23 @@ int main() {
 
     std::cout << "UDP server is listening on port " << SERVER_PORT << std::endl;
 
-    // Receive data from the client
-    ssize_t recv_len = recvfrom(sockfd, buffer, BUFFER_SIZE - 1, 0, (struct sockaddr *)&client_addr, &client_addr_len);
-    if (recv_len < 0) {
-        perror("recvfrom");
-        close(sockfd);
-        return 1;
+    while (true) {
+        // Receive data from the client
+        ssize_t recv_len = recvfrom(sockfd, buffer, BUFFER_SIZE - 1, 0, (struct sockaddr *)&client_addr, &client_addr_len);
+        if (recv_len < 0) {
+            perror("recvfrom");
+            close(sockfd);
+            return 1;
+        }
+
+        // Null-terminate the buffer
+        buffer[recv_len] = '\0';
+
+        // Print the received message
+        std::cout << "{Received message from " << inet_ntoa(client_addr.sin_addr) << ":" << ntohs(client_addr.sin_port) << "\t";
+        std::cout << "Message: " << buffer << "}" << std::endl;
     }
-
-    // Null-terminate the buffer
-    buffer[recv_len] = '\0';
-
-    // Print the received message
-    std::cout << "Received message from " << inet_ntoa(client_addr.sin_addr) << ":" << ntohs(client_addr.sin_port) << std::endl;
-    std::cout << "Message: " << buffer << std::endl;
-
+    
     // Close the socket
-    close(sockfd);
-
-    return 0;
+    return close(sockfd);
 }

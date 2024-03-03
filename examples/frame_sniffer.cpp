@@ -128,8 +128,8 @@ int ParseFrames()
 std::optional<std::string> GetDefaultIFaceName(const posnet::IFaceManager& ifaceManager)
 {
     const auto configs = ifaceManager.getConfigs();
-    const auto it = std::find_if(configs.cbegin(), configs.cend(), [](const posnet::IFaceManager::Configuration& config) {
-        return (config.getName() && *config.getName() != posnet::IFaceManager::LOOP_BACK_INTERFACE_NAME); 
+    const auto it = std::find_if(configs.cbegin(), configs.cend(), [](const posnet::IFaceConfiguration& config) {
+        return (config.getName() && *config.getName() != posnet::IFaceConfiguration::LOOP_BACK_INTERFACE_NAME); 
     });
 
     return it != configs.cend() ? std::make_optional<std::string>(*(it->getName())) : std::nullopt;
@@ -141,7 +141,6 @@ void PrintHelpInfo()
 }
 
 int main(int argc, char** argv) {
-
     try {
         posnet::IFaceManager ifaceManager;
         const auto defaultIfaceName(GetDefaultIFaceName(ifaceManager));

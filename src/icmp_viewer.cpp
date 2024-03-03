@@ -185,29 +185,26 @@ std::string_view PackageCodeToStr(const posnet::IcmpViewer::PackageCode packageC
 
 namespace posnet {
     
-IcmpViewer::IcmpViewer(const IpViewer& ipViewer):
-m_icmpFrame(reinterpret_cast<HeaderStructType*>(
-    const_cast<RawFrameViewType::value_type*>(
-        ipViewer.getAsRawFrame().data() + ipViewer.getHeaderLengthInBytes() + sizeof(EthernetViewer::HeaderStructType)))),
-m_rawFrame(ipViewer.getAsRawFrame())
+IcmpViewer::IcmpViewer(IpViewer ipViewer):
+BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(ipViewer.getStart()), ipViewer.getSize()),
+m_frame(reinterpret_cast<HeaderStructType*>(
+    ipViewer.getFrameHeaderStart() + ipViewer.getHeaderLengthInBytes()))
 {}
 
 IcmpViewer::IcmpViewer(const ConstRawFrameViewType rawFrame):
-m_icmpFrame(reinterpret_cast<HeaderStructType*>(
-    const_cast<RawFrameViewType::value_type*>(
-        rawFrame.data() + IpViewer(rawFrame).getHeaderLengthInBytes() + sizeof(EthernetViewer::HeaderStructType)))),
-m_rawFrame(rawFrame)
+BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(rawFrame.data()), DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES),
+m_frame(reinterpret_cast<HeaderStructType*>(
+    const_cast<RawFrameViewType::value_type*>(rawFrame.data())))
 {}
 
 IcmpViewer::IcmpViewer(const RawFrameViewType rawFrame):
-m_icmpFrame(reinterpret_cast<HeaderStructType*>(
-    rawFrame.data() + IpViewer(rawFrame).getHeaderLengthInBytes() + sizeof(EthernetViewer::HeaderStructType))),
-m_rawFrame(rawFrame)
+BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(rawFrame.data()), DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES),
+m_frame(reinterpret_cast<HeaderStructType*>(rawFrame.data()))
 {}
 
 IcmpViewer::PackageType IcmpViewer::getType()
 {
-    return ExtractPackageType(m_icmpFrame->type);
+    return ExtractPackageType(m_frame->type);
 }
 
 std::string_view IcmpViewer::getTypeAsStr()
@@ -217,7 +214,7 @@ std::string_view IcmpViewer::getTypeAsStr()
 
 IcmpViewer::PackageCode IcmpViewer::getCode()
 {
-    return ExtractPackageCode(getType(), m_icmpFrame->code);
+    return ExtractPackageCode(getType(), m_frame->code);
 }
 
 std::string_view IcmpViewer::getCodeAsStr()
@@ -225,24 +222,24 @@ std::string_view IcmpViewer::getCodeAsStr()
     return PackageCodeToStr(getCode());
 }
 
-int IcmpViewer::getCheckSum()
+unsigned int IcmpViewer::getCheckSum()
 {
-    return ntohs(m_icmpFrame->checksum);
+    return ntohs(m_frame->checksum);
 }
 
-int IcmpViewer::getId()
+unsigned int IcmpViewer::getId()
 {
-    return ntohs(m_icmpFrame->un.echo.id);
+    return ntohs(m_frame->un.echo.id);
 }
 
-int IcmpViewer::getSequenceNumber()
+unsigned int IcmpViewer::getSequenceNumber()
 {
-    return ntohs(m_icmpFrame->un.echo.sequence);
+    return ntohs(m_frame->un.echo.sequence);
 }
 
 IcmpViewer::PackageType IcmpViewer::getType() const
 {
-    return ExtractPackageType(m_icmpFrame->type);
+    return ExtractPackageType(m_frame->type);
 }
 
 std::string_view IcmpViewer::getTypeAsStr() const
@@ -252,7 +249,7 @@ std::string_view IcmpViewer::getTypeAsStr() const
 
 IcmpViewer::PackageCode IcmpViewer::getCode() const
 {
-    return ExtractPackageCode(getType(), m_icmpFrame->code);
+    return ExtractPackageCode(getType(), m_frame->code);
 }
 
 std::string_view IcmpViewer::getCodeAsStr() const
@@ -260,19 +257,19 @@ std::string_view IcmpViewer::getCodeAsStr() const
     return PackageCodeToStr(getCode());
 }
 
-int IcmpViewer::getCheckSum() const
+unsigned int IcmpViewer::getCheckSum() const
 {
-    return ntohs(m_icmpFrame->checksum);
+    return ntohs(m_frame->checksum);
 }
 
-int IcmpViewer::getId() const
+unsigned int IcmpViewer::getId() const
 {
-    return ntohs(m_icmpFrame->un.echo.id);
+    return ntohs(m_frame->un.echo.id);
 }
 
-int IcmpViewer::getSequenceNumber() const
+unsigned int IcmpViewer::getSequenceNumber() const
 {
-    return ntohs(m_icmpFrame->un.echo.sequence);
+    return ntohs(m_frame->un.echo.sequence);
 }
 
 std::ostream& IcmpViewer::operator<<(std::ostream& os) const

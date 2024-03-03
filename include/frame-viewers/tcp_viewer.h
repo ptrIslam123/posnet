@@ -51,7 +51,7 @@ public:
     using HeaderStructType = struct tcphdr;
     using PortType = int;
 
-    explicit TcpViewer(const IpViewer& ipViewer);
+    explicit TcpViewer(IpViewer ipViewer);
     explicit TcpViewer(RawFrameViewType rawFrame);
     explicit TcpViewer(ConstRawFrameViewType rawFrame);
 
@@ -68,6 +68,7 @@ public:
     bool getResetFlag();
     bool getSynchronizeFlag();
     bool getFinishFlag();
+    std::uint8_t* getFrameHeaderStart();
 
     PortType getSourcePort() const;
     PortType getDestPort() const;
@@ -86,8 +87,7 @@ public:
     std::ostream& operator<<(std::ostream& os) const;
 
 private:
-    HeaderStructType* m_tcpFrame;
-    ConstRawFrameViewType m_rawFrame;
+    HeaderStructType* m_frame;
 };
 
 std::ostream& operator<<(std::ostream& os, const TcpViewer& tcpViewer);

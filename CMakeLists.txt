@@ -43,6 +43,7 @@ include/frame-viewers/arp_viewer.h
 include/frame-builder/ethernet_builder.h
 include/frame-builder/ip_builder.h
 include/frame-builder/udp_builder.h
+include/frame-builder/icmp_builder.h
 include/utils/lazy.h
 include/utils/result.h
 include/utils/scoped_lock.h
@@ -50,6 +51,8 @@ include/utils/strict_mutex.h
 include/utils/system_error.h
 include/utils/sock_addr_convertor.h
 include/utils/algorithms.h
+include/definitions.h
+include/base_frame.h
 )
 
 set(LIB_SRCS 
@@ -66,6 +69,8 @@ src/udp_builder.cpp
 src/system_error.cpp
 src/sock_addr_convertor.cpp
 src/algorithms.cpp
+src/base_frame.cpp
+src/icmp_builder.cpp
 )
 
 message(STATUS "LIB_INSTALL_DIR=${CMAKE_BINARY_DIR}/lib")
@@ -91,6 +96,8 @@ if(BUILD_EXAMPLES)
 
     target_builder("frame_shiffer" "examples/frame_sniffer.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
     target_builder("udp_client" "examples/udp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
+    target_builder("icmp_client" "examples/icmp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
+    target_builder("native_icmp_client" "examples/native_icmp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
 endif()
 
 #******************************************************* Build tools dir *******************************************************#

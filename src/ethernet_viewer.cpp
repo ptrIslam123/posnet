@@ -23,24 +23,24 @@ std::string_view ProtocolToStr(const posnet::EthernetViewer::ProtocolType protoc
 namespace posnet {
 
 EthernetViewer::EthernetViewer(const ConstRawFrameViewType rawFrame):
-m_ethernetFrame(reinterpret_cast<HeaderStructType*>(
-    const_cast<RawFrameViewType::value_type*>(rawFrame.data()))),
-m_rawFrame(rawFrame)
+BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(rawFrame.data()), DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES),
+m_frame(reinterpret_cast<HeaderStructType*>(
+    const_cast<RawFrameViewType::value_type*>(rawFrame.data())))
 {}
 
 std::string EthernetViewer::getDestMacAddressAsStr()
 {
-    return posnet::utils::MacAddrToStr(m_ethernetFrame->h_dest);
+    return posnet::utils::MacAddrToStr(m_frame->h_dest);
 }
 
 std::string EthernetViewer::getSourceMacAddressAsStr()
 {
-    return posnet::utils::MacAddrToStr(m_ethernetFrame->h_source);
+    return posnet::utils::MacAddrToStr(m_frame->h_source);
 }
 
 EthernetViewer::ProtocolType EthernetViewer::getProtocol()
 {
-    switch (ntohs(m_ethernetFrame->h_proto)) {
+    switch (ntohs(m_frame->h_proto)) {
         using ProtocolType = EthernetViewer::ProtocolType;
         case ETH_P_IP: return ProtocolType::IP;
         case ETH_P_ARP: return ProtocolType::ARP;
@@ -57,17 +57,17 @@ std::string_view EthernetViewer::getProtocolAsStr()
 
 std::string EthernetViewer::getDestMacAddressAsStr() const
 {
-    return posnet::utils::MacAddrToStr(m_ethernetFrame->h_dest);
+    return posnet::utils::MacAddrToStr(m_frame->h_dest);
 }
 
 std::string EthernetViewer::getSourceMacAddressAsStr() const
 {
-    return posnet::utils::MacAddrToStr(m_ethernetFrame->h_source);
+    return posnet::utils::MacAddrToStr(m_frame->h_source);
 }
 
 EthernetViewer::ProtocolType EthernetViewer::getProtocol() const
 {
-    switch (ntohs(m_ethernetFrame->h_proto)) {
+    switch (ntohs(m_frame->h_proto)) {
         case 0x0800: return ProtocolType::IP;
         case 0x0806: return ProtocolType::ARP;
         case 0x8035: return ProtocolType::RARP;
@@ -79,6 +79,11 @@ EthernetViewer::ProtocolType EthernetViewer::getProtocol() const
 std::string_view EthernetViewer::getProtocolAsStr() const
 {
     return ProtocolToStr(getProtocol());
+}
+
+std::uint8_t* EthernetViewer::getFrameHeaderStart()
+{
+    return reinterpret_cast<std::uint8_t*>(m_frame);
 }
 
 std::ostream& EthernetViewer::operator<<(std::ostream& os) const
@@ -102,7 +107,7 @@ std::ostream& EthernetViewer::operator<<(std::ostream& os) const
             break;
         }
         default:
-            os << "Undefined(" << m_ethernetFrame->h_proto << ")";
+            os << "Undefined(" << m_frame->h_proto << ")";
             break;
     }
     os << "\n";
@@ -113,16 +118,6 @@ std::ostream& EthernetViewer::operator<<(std::ostream& os) const
 std::ostream& operator<<(std::ostream& os, const EthernetViewer& ethernetViewer)
 {
     return ethernetViewer.operator<<(os);
-}
-
-EthernetViewer::ConstRawFrameViewType EthernetViewer::getAsRawFrame()
-{
-    return m_rawFrame;
-}
-
-EthernetViewer::ConstRawFrameViewType EthernetViewer::getAsRawFrame() const
-{
-    return m_rawFrame;
 }
 
 } //! namespace posnet

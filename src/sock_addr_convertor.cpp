@@ -51,10 +51,10 @@ std::string MacAddrToStr(struct sockaddr& macAddr)
     return ss.str();
 }
 
-std::optional<uint32_t> StrToIpAddr(std::string_view ipAddrStr)
+std::optional<uint32_t> StrToIpAddr(const std::string_view ipAddrStr)
 {
     struct in_addr addr;
-    if (inet_pton(AF_INET, ipAddrStr.data(), &addr) == 1) {
+    if (inet_aton(ipAddrStr.data(), &addr) != 0) {
         return addr.s_addr;
     } else {
         return std::nullopt;
