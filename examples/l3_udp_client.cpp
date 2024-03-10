@@ -1,6 +1,6 @@
 #include <iostream>
-#include <iomanip>
 #include <array>
+#include <algorithm>
 #include <cassert>
 #include <cstring>
 
@@ -19,21 +19,40 @@
 #include "include/frame-viewers/udp_viewer.h"
 
 #include "include/utils/algorithms.h"
+#include "include/utils/scoped_lock.h"
 
 #define DEBUG
 
 int main() {   
     constexpr auto PORT = 12345;
-    constexpr std::string_view payload("Hello, UDP server!");
+    constexpr std::string_view PAYLOAD("Hello, UDP server!");
+
     std::array<posnet::def::ByteType, 1024> buffer = {0};
     posnet::def::SizeType bufferSize = 0;
-
-    // Set the destination address
     struct sockaddr_in sockAddr;
-    std::memset(&sockAddr, 0, sizeof(sockAddr));
-    sockAddr.sin_family = AF_INET;
-    sockAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    sockAddr.sin_port = htons(PORT);
+
+    std::string myIpAddr;
+
+    // Set up socket address structure
+    {
+        posnet::IFaceManager ifaceManager;
+        const auto configs = ifaceManager.getConfigs();
+        const auto it = std::find_if(configs.cbegin(), configs.cend(), [](const posnet::IFaceConfiguration& config) {
+            return (config.getName() && (*config.getName() != posnet::IFaceConfiguration::LOOP_BACK_INTERFACE_NAME));
+        });
+
+        if (it == configs.cend()) {
+            return EXIT_FAILURE;
+        }
+
+        assert(it->getIpAddress());
+        myIpAddr = *it->getIpAddress();
+
+        std::memset(&sockAddr, 0, sizeof(sockAddr));
+        sockAddr.sin_family = AF_INET;
+        sockAddr.sin_addr.s_addr = inet_addr(myIpAddr.data());
+        sockAddr.sin_port = htons(PORT);
+    }  
 
     // Building frame
     {
@@ -44,24 +63,28 @@ int main() {
                 .setId(0)
                 .setTTL(64)
                 .setProtocol(posnet::IpBuilder::ProtocolType::UDP)
-                .setSourceIpAddress("10.110.15.84")
-                .setDestIpAddress("127.0.0.1");
+                .setSourceIpAddress(myIpAddr)
+                .setDestIpAddress(myIpAddr);
 
         posnet::UdpBuilder udpBuilder;
         udpBuilder.setSourcePort(PORT + 1)
                 .setDestPort(PORT)
-                .setCheckSum(0) // for last frame is ok!
-                .setUdpDataGramLength(posnet::UdpBuilder::DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES + payload.size());
+                .setCheckSum(0)
+                .setUdpDataGramLength(posnet::UdpBuilder::DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES + PAYLOAD.size());
 
         ipBuilder.setTotalLength(posnet::IpBuilder::DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES + 
-                                    posnet::UdpBuilder::DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES + payload.size());
+                                    posnet::UdpBuilder::DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES + PAYLOAD.size());
         ipBuilder.setCheckSum(posnet::utils::CalcChecksum(ipBuilder.getAsRawFrameView()));
 
         // filling the buffer
-        std:memcpy(buffer.data() + 0, ipBuilder.getStart(), ipBuilder.getSize());
-        std::memcpy(buffer.data() + ipBuilder.getSize(), udpBuilder.getStart(), udpBuilder.getSize());
-        std::memcpy(buffer.data() + ipBuilder.getSize() + udpBuilder.getSize(), payload.data(), payload.size());
-        bufferSize = ipBuilder.getSize() + udpBuilder.getSize() + payload.size();
+        std:memcpy(buffer.data() + bufferSize, ipBuilder.getStart(), ipBuilder.getSize());
+        bufferSize += ipBuilder.getSize();
+
+        std::memcpy(buffer.data() + bufferSize, udpBuilder.getStart(), udpBuilder.getSize());
+        bufferSize += udpBuilder.getSize();
+
+        std::memcpy(buffer.data() + bufferSize, PAYLOAD.data(), PAYLOAD.size());
+        bufferSize += PAYLOAD.size();
 
 #ifdef DEBUG
         std::cout << ipBuilder << std::endl;
@@ -71,9 +94,13 @@ int main() {
 
     // Create a raw socket
     int sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
+    posnet::utils::ScopedLock socketLock([sock] {
+        (void)close(sock);
+    });
+
     if (sock == -1) {
         perror("socket");
-        return 1;
+        return EXIT_FAILURE;
     }
 
     // Set the option to include IP header (see https://www.opennet.ru/man.shtml?topic=raw&category=7&russian=0)
@@ -81,8 +108,7 @@ int main() {
         int one = 1;
         if (setsockopt(sock, IPPROTO_IP, IP_HDRINCL, &one, sizeof(one)) == -1) {
             perror("setsockopt");
-            close(sock);
-            return 1;
+            return EXIT_FAILURE;
         }
     }
     
@@ -90,11 +116,9 @@ int main() {
     // Send the packet
     if (sendto(sock, buffer.data(), bufferSize, 0, (struct sockaddr*)&sockAddr, sizeof(sockAddr)) == -1) {
         perror("sendto");
-        close(sock);
-        return 1;
+        return EXIT_FAILURE;
     }
 
     std::cout << "Sent the message successfully" << std::endl;
-    // Close the socket
-    return close(sock);
+    return EXIT_SUCCESS;
 }
