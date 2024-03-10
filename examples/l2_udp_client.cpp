@@ -46,7 +46,7 @@ int main() {
         });
 
         if (it == configs.cend()) {
-            return 1;
+            return EXIT_FAILURE;
         }
 
         assert(it->getIndex());
@@ -66,7 +66,7 @@ int main() {
     {
         posnet::EthernetBuilder ethernetBuilder;
         ethernetBuilder.setProtocol(posnet::EthernetBuilder::ProtocolType::IP)
-                .setDestMacAddress("58:11:22:06:96:00")
+                .setDestMacAddress(myMacAddr)
                 .setSourceMacAddress(myMacAddr);
 
         posnet::IpBuilder ipBuilder;
@@ -82,7 +82,7 @@ int main() {
         posnet::UdpBuilder udpBuilder;
         udpBuilder.setSourcePort(PORT + 1)
                 .setDestPort(PORT)
-                .setCheckSum(0) // for last frame is ok!
+                .setCheckSum(0)
                 .setUdpDataGramLength(posnet::UdpBuilder::DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES + PAYLOAD.size());
 
         ipBuilder.setTotalLength(posnet::IpBuilder::DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES + 
@@ -100,8 +100,8 @@ int main() {
         std::memcpy(buffer.data() + bufferSize, udpBuilder.getStart(), udpBuilder.getSize());
         bufferSize += udpBuilder.getSize();
 
-        std::memcmp(buffer.data() + bufferSize, PAYLOAD.data(), PAYLOAD.size());
-        bufferSize + PAYLOAD.size();
+        std::memcpy(buffer.data() + bufferSize, PAYLOAD.data(), PAYLOAD.size());
+        bufferSize += PAYLOAD.size();
 
 #ifdef DEBUG
         std::cout << ethernetBuilder << std::endl;

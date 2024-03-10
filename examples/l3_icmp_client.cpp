@@ -2,13 +2,18 @@
 #include <string>
 #include <string_view>
 #include <array>
+#include <algorithm>
 
 #include <cstring>
+#include <cassert>
+
+#include "include/net-iface/iface_manager.h"
 
 #include "include/frame-builder/ip_builder.h"
 #include "include/frame-builder/icmp_builder.h"
 
 #include "include/utils/algorithms.h"
+#include "include/utils/scoped_lock.h"
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -19,16 +24,34 @@
 #define DEBUG
 
 int main() {
-    constexpr std::string_view destIpAddr("8.8.8.8"); 
+    // public ip address of goog`s dns service
+    constexpr std::string_view GOOG_DNS_SERVER_IP_ADDR("8.8.8.8"); 
     constexpr auto PORT = 12345;
+
     std::array<posnet::def::ByteType, 1024> buffer = {0};
     posnet::def::SizeType bufferSize = 0;
+    struct sockaddr_in sockAddr;
+    std::string myIpAddr;
 
-    // Create a raw socket for sending
-    int send_sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
-    if (send_sock == -1) {
-        perror("socket");
-        return 1;
+    // Set up socket address structure
+    {
+        posnet::IFaceManager ifaceManager;
+        const auto configs = ifaceManager.getConfigs();
+        const auto it = std::find_if(configs.cbegin(), configs.cend(), [](const posnet::IFaceConfiguration& config) {
+            return (config.getName() && (*config.getName() != posnet::IFaceConfiguration::LOOP_BACK_INTERFACE_NAME));
+        });
+
+        if (it == configs.cend()) {
+            return EXIT_FAILURE;
+        }
+
+        assert(it->getIpAddress());
+        myIpAddr = *it->getIpAddress();
+
+        
+        memset(&sockAddr, 0, sizeof(sockAddr));
+        sockAddr.sin_family = AF_INET;
+        sockAddr.sin_addr.s_addr = inet_addr(myIpAddr.data());
     }
 
     // Building frame
@@ -40,8 +63,8 @@ int main() {
                 .setId(0)
                 .setTTL(64)
                 .setProtocol(posnet::IpBuilder::ProtocolType::ICMP)
-                .setSourceIpAddress("10.110.15.84")
-                .setDestIpAddress(destIpAddr);
+                .setSourceIpAddress(myIpAddr)
+                .setDestIpAddress(GOOG_DNS_SERVER_IP_ADDR);
 
         posnet::IcmpBuilder icmpBuilder;
         icmpBuilder.setType(posnet::IcmpBuilder::PackageType::EchoRequest)
@@ -55,9 +78,11 @@ int main() {
         ipBuilder.setCheckSum(posnet::utils::CalcChecksum(ipBuilder.getAsRawFrameView()));
 
         // filling the buffer
-        std:memcpy(buffer.data() + 0, ipBuilder.getStart(), ipBuilder.getSize());
-        std::memcpy(buffer.data() + ipBuilder.getSize(), icmpBuilder.getStart(), icmpBuilder.getSize());
-        bufferSize = ipBuilder.getSize() + icmpBuilder.getSize();
+        std:memcpy(buffer.data() + bufferSize, ipBuilder.getStart(), ipBuilder.getSize());
+        bufferSize += ipBuilder.getSize();
+
+        std::memcpy(buffer.data() + bufferSize, icmpBuilder.getStart(), icmpBuilder.getSize());
+        bufferSize += icmpBuilder.getSize();
 
 #ifdef DEBUG
         std::cout << ipBuilder << std::endl;
@@ -65,31 +90,32 @@ int main() {
 #endif //! DEBUG
     }
 
+    // Create a raw socket for sending
+    int sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
+    posnet::utils::ScopedLock socketLock([sock] {
+        (void)close(sock);
+    });
+
+    if (sock == -1) {
+        perror("socket");
+        return EXIT_FAILURE;
+    }
+
     // Set the option to include IP header
     {
         int one = 1;
-        if (setsockopt(send_sock, IPPROTO_IP, IP_HDRINCL, &one, sizeof(one)) == -1) {
+        if (setsockopt(sock, IPPROTO_IP, IP_HDRINCL, &one, sizeof(one)) == -1) {
             perror("setsockopt");
-            close(send_sock);
-            return 1;
+            return EXIT_FAILURE;
         }
     }
 
-    // Set the destination address
-    struct sockaddr_in dest_addr;
-    memset(&dest_addr, 0, sizeof(dest_addr));
-    dest_addr.sin_family = AF_INET;
-    dest_addr.sin_addr.s_addr = inet_addr(destIpAddr.data());
-
     // Send the packet
-    if (sendto(send_sock, buffer.data(), bufferSize, 0, (struct sockaddr*)&dest_addr, sizeof(dest_addr)) == -1) {
+    if (sendto(sock, buffer.data(), bufferSize, 0, (struct sockaddr*)&sockAddr, sizeof(sockAddr)) == -1) {
         perror("sendto");
-        close(send_sock);
-        return 1;
+        return EXIT_FAILURE;
     }
 
     std::cout << "Sent the ICMP echo request successfully" << std::endl;
-
-    // Close the sending socket
-    return close(send_sock);
+    return EXIT_SUCCESS;
 }

@@ -48,7 +48,7 @@ int main() {
         });
 
         if (it == configs.cend()) {
-            return 1;
+            return EXIT_FAILURE;
         }
 
         assert(it->getIndex());
