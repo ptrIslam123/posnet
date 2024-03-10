@@ -16,7 +16,7 @@ constexpr auto MAC_ADDRESS_LENGTH_IN_BYTES = 6;
 constexpr auto IP_ADDRESS_LENGTH_IN_BYTES = 4;
 
 std::string MacAddrToStr(std::span<uint8_t, MAC_ADDRESS_LENGTH_IN_BYTES> macAddr);
-std::string MacAddrToStr(struct sockaddr& macAddr);
+std::string MacAddrToStr(const struct sockaddr& macAddr);
 std::string IpAddrToStr(std::span<uint8_t, IP_ADDRESS_LENGTH_IN_BYTES> ipAddr);
 std::string IpAddrToStr(uint32_t ipAddr);
 

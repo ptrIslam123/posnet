@@ -13,6 +13,10 @@
 #include <netinet/in.h>
 #include <netinet/ether.h>
 
+#include <sys/socket.h>
+#include <linux/if_packet.h>
+#include <net/ethernet.h>
+
 namespace posnet::utils {
     
 std::string MacAddrToStr(std::span<uint8_t, MAC_ADDRESS_LENGTH_IN_BYTES> macAddr)
@@ -36,19 +40,10 @@ std::string IpAddrToStr(uint32_t ipAddr)
     return inet_ntoa(*addrStruct);
 }
 
-std::string MacAddrToStr(struct sockaddr& macAddr)
+std::string MacAddrToStr(const struct sockaddr& macAddr)
 {
-    auto mac = macAddr.sa_data;
-    std::ostringstream ss;
-    ss << std::hex << std::setfill('0');
-    for (auto i = 0; i < 6; ++i) {
-        ss << std::setw(2) << static_cast<int>(mac[i]);
-        if (i < 5) {
-            ss << ":";
-        }
-    }
-    ss << std::dec;
-    return ss.str();
+    const auto addr = ether_ntoa(reinterpret_cast<const struct ether_addr*>(&macAddr.sa_data));
+    return (addr != nullptr ? std::string(addr) : std::string());
 }
 
 std::optional<uint32_t> StrToIpAddr(const std::string_view ipAddrStr)

@@ -7,7 +7,7 @@ option(BUILD_EXAMPLES "Build the examples" ON)
 option(BUILD_TOOLS "Build the tools" ON)
 
 if(Win32)
-    message("")
+    message("Not supported platform. Only POSIX system")
 endif()
 
 function(target_builder TARGET_NAME SRCS HDRS LIBS LIBS_DIR OUTTPUT_DIR)
@@ -95,9 +95,12 @@ if(BUILD_EXAMPLES)
     message(STATUS "BUILD_EXAMPLES=ON")
 
     target_builder("frame_shiffer" "examples/frame_sniffer.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
-    target_builder("udp_client" "examples/udp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
-    target_builder("icmp_client" "examples/icmp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
-    target_builder("native_icmp_client" "examples/native_icmp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
+    
+    target_builder("l3_udp_client" "examples/l3_udp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
+    target_builder("l2_udp_client" "examples/l2_udp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
+    
+    target_builder("l3_icmp_client" "examples/l3_icmp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
+    target_builder("l2_icmp_client" "examples/l2_icmp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
 endif()
 
 #******************************************************* Build tools dir *******************************************************#
