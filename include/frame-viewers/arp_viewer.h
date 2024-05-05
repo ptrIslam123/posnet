@@ -42,7 +42,9 @@ public:
         uint8_t targetMac[6];
         uint8_t targetIp[4];
     };
+
     static constexpr unsigned int DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES = sizeof(struct ArpHeader);
+    
     using RawFrameViewType = EthernetViewer::RawFrameViewType;
     using ConstRawFrameViewType = EthernetViewer::ConstRawFrameViewType;
     using HeaderStructType = struct ArpHeader;

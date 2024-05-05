@@ -46,6 +46,7 @@ public:
     std::optional<AddressType> getMacAddress();
     std::optional<AddressType> getIpAddress();
     std::optional<AddressType> getNetMaskAddress();
+    std::optional<unsigned int> getNetMaskAddressLength();
     std::optional<AddressType> getBroadcastAddress();
     std::optional<IndexType> getIndex();
     std::optional<MTUType> getMTU();
@@ -55,6 +56,7 @@ public:
     std::optional<AddressType> getMacAddress() const;
     std::optional<AddressType> getIpAddress() const;
     std::optional<AddressType> getNetMaskAddress() const;
+    std::optional<unsigned int> getNetMaskAddressLength() const;
     std::optional<AddressType> getBroadcastAddress() const;
     std::optional<IndexType> getIndex() const;
     std::optional<MTUType> getMTU() const;

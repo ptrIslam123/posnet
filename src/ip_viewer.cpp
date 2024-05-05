@@ -27,7 +27,7 @@ namespace posnet {
 IpViewer::IpViewer(EthernetViewer ethernetViewer):
 BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(ethernetViewer.getStart()), ethernetViewer.getSize()),
 m_frame(reinterpret_cast<HeaderStructType*>(
-    ethernetViewer.getFrameHeaderStart() + EthernetViewer::DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES))
+    const_cast<ByteType*>(ethernetViewer.getStart() + EthernetViewer::DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES)))
 {}
 
 IpViewer::IpViewer(const RawFrameViewType rawFrame):

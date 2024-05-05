@@ -19,6 +19,7 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <net/if.h>
 #include <sys/types.h>
 
 using namespace posnet::utils;
@@ -213,7 +214,7 @@ void SetConfig(const int socket, const posnet::IFaceConfiguration& config)
             }
         }
 
-        if (ioctl(socket, SIOCGIFFLAGS, &ifr) < 0) {
+        if (ioctl(socket, SIOCSIFFLAGS, &ifr) < 0) {
             throw std::runtime_error("Could not set status: " + GetLastSysError());
         }
     }
@@ -398,6 +399,16 @@ std::optional<IFaceConfiguration::AddressType> IFaceConfiguration::getNetMaskAdd
     return m_netMaskAddr;
 }
 
+std::optional<unsigned int> IFaceConfiguration::getNetMaskAddressLength()
+{
+    const auto netMaskAddr = getNetMaskAddress();
+    if (netMaskAddr) {
+        return CountSetBitsInIpAddr(*netMaskAddr);
+    } else {
+        return std::nullopt;
+    }
+}
+
 std::optional<IFaceConfiguration::AddressType> IFaceConfiguration::getBroadcastAddress()
 {
     return m_broadcastAddr;
@@ -436,6 +447,16 @@ std::optional<IFaceConfiguration::AddressType> IFaceConfiguration::getIpAddress(
 std::optional<IFaceConfiguration::AddressType> IFaceConfiguration::getNetMaskAddress() const
 {
     return m_netMaskAddr;
+}
+
+std::optional<unsigned int> IFaceConfiguration::getNetMaskAddressLength() const
+{
+    const auto netMaskAddr = getNetMaskAddress();
+    if (netMaskAddr) {
+        return CountSetBitsInIpAddr(*netMaskAddr);
+    } else {
+        return std::nullopt;
+    }
 }
 
 std::optional<IFaceConfiguration::AddressType> IFaceConfiguration::getBroadcastAddress() const

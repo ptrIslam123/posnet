@@ -33,7 +33,7 @@ std::uint16_t CalcChecksum(const std::span<std::uint8_t> packet)
     std::size_t i;
     std::uint64_t sum = 0;
     auto buffer = packet.data();
-
+    const auto size = packet.size();
     for (i = 0; i < size; i += 2) {
         sum += *(uint16_t *)buffer;
         buffer += 2;

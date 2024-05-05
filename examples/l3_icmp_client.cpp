@@ -26,7 +26,6 @@
 int main() {
     // public ip address of goog`s dns service
     constexpr std::string_view GOOG_DNS_SERVER_IP_ADDR("8.8.8.8"); 
-    constexpr auto PORT = 12345;
 
     std::array<posnet::def::ByteType, 1024> buffer = {0};
     posnet::def::SizeType bufferSize = 0;
@@ -49,7 +48,7 @@ int main() {
         myIpAddr = *it->getIpAddress();
 
         
-        memset(&sockAddr, 0, sizeof(sockAddr));
+        std::memset(&sockAddr, 0, sizeof(sockAddr));
         sockAddr.sin_family = AF_INET;
         sockAddr.sin_addr.s_addr = inet_addr(myIpAddr.data());
     }

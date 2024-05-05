@@ -51,8 +51,6 @@ public:
     ProtocolType getProtocol() const;
     std::string_view getProtocolAsStr() const;
 
-    std::uint8_t* getFrameHeaderStart();
-
     std::ostream& operator<<(std::ostream& os) const;
 
 private:

@@ -4,11 +4,7 @@
 #include "include/base_frame.h"
 #include "include/frame-viewers/ethernet_viewer.h"
 
-#include <string_view>
-#include <span>
 #include <ostream>
-
-#include <netinet/ether.h>
 
 namespace posnet {
     

@@ -81,11 +81,6 @@ std::string_view EthernetViewer::getProtocolAsStr() const
     return ProtocolToStr(getProtocol());
 }
 
-std::uint8_t* EthernetViewer::getFrameHeaderStart()
-{
-    return reinterpret_cast<std::uint8_t*>(m_frame);
-}
-
 std::ostream& EthernetViewer::operator<<(std::ostream& os) const
 {
     os << "Ethernet header {\n";

@@ -40,10 +40,13 @@ include/frame-viewers/udp_viewer.h
 include/frame-viewers/tcp_viewer.h
 include/frame-viewers/icmp_viewer.h
 include/frame-viewers/arp_viewer.h
+
 include/frame-builder/ethernet_builder.h
 include/frame-builder/ip_builder.h
 include/frame-builder/udp_builder.h
 include/frame-builder/icmp_builder.h
+include/frame-builder/arp_builder.h
+
 include/utils/lazy.h
 include/utils/result.h
 include/utils/scoped_lock.h
@@ -71,6 +74,7 @@ src/sock_addr_convertor.cpp
 src/algorithms.cpp
 src/base_frame.cpp
 src/icmp_builder.cpp
+src/arp_builder.cpp
 )
 
 message(STATUS "LIB_INSTALL_DIR=${CMAKE_BINARY_DIR}/lib")
@@ -101,11 +105,17 @@ if(BUILD_EXAMPLES)
     
     target_builder("l3_icmp_client" "examples/l3_icmp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
     target_builder("l2_icmp_client" "examples/l2_icmp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
+
+    target_builder("l2_arp_request" "examples/l2_arp_request.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
+    target_builder("l2_native_arp_request" "examples/l2_native_arp_request.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
+
+    target_builder("bluetooth-dev-detector" "examples/bluetooth-dev-detector.cpp" "" "bluetooth" "" "examples")
 endif()
 
 #******************************************************* Build tools dir *******************************************************#
 if(BUILD_TOOLS)
     message(STATUS "BUILD_TOOLS=ON")
 
-    target_builder("udp_server" "tools/udp_server.cpp" "" "" "" "tools")
+    target_builder("udp-server" "tools/udp_server.cpp" "" "" "" "tools")
+    target_builder("icmp-scanner" "tools/icmp_scanner.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "tools")
 endif()

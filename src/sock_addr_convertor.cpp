@@ -4,6 +4,7 @@
 
 #include <sstream>
 #include <iomanip>
+#include <limits>
 #include <cstring>
 #include <cstdio>
 
@@ -56,6 +57,36 @@ std::optional<uint32_t> StrToIpAddr(const std::string_view ipAddrStr)
     }
 }
 
+std::optional<std::array<std::uint8_t, IP_ADDRESS_LENGTH_IN_BYTES>> StrToIpAddrArray(const std::string_view ipAddrStr) 
+{
+    std::array<std::uint8_t, IP_ADDRESS_LENGTH_IN_BYTES> ipAddr = {0};
+    std::istringstream iss(ipAddrStr.data());
+    std::string segment;
+    auto i = 0;
+
+    while (std::getline(iss, segment, '.')) {
+        if (i >= 4 || segment.empty()) {
+            return std::nullopt; // Invalid IP address format
+        }
+
+        std::istringstream converter(segment);
+        int value;
+        converter >> value;
+
+        if (converter.fail() || value < 0 || value > 255) {
+            return std::nullopt; // Invalid IP address value
+        }
+
+        ipAddr[i++] = static_cast<std::uint8_t>(value);
+    }
+
+    if (i != 4) {
+        return std::nullopt; // Not enough segments
+    }
+
+    return ipAddr;
+}
+
 std::optional<std::array<uint8_t, MAC_ADDRESS_LENGTH_IN_BYTES>> StrToMacAddr(const std::string_view macAddrStr)
 {
     std::array<int, MAC_ADDRESS_LENGTH_IN_BYTES> values = {0};
@@ -70,6 +101,52 @@ std::optional<std::array<uint8_t, MAC_ADDRESS_LENGTH_IN_BYTES>> StrToMacAddr(con
         result[i] = static_cast<uint8_t>(values[i]);
     }
     return result;
+}
+
+std::optional<uint32_t> CountSetBitsInIpAddr(const std::string_view ipAddrStr)
+{
+    const auto address = StrToIpAddr(ipAddrStr);
+    if (address) {
+        auto n = *address;
+        uint32_t count = 0;
+        while (n) {
+            count += n & 1;
+            n >>= 1;
+        }
+
+        return count;
+    } else {
+        return std::nullopt;
+    }
+}
+
+std::set<std::string> GenerateIpAddrRange(const std::string_view startIpAddr, const std::string_view endIpAddr)
+{
+    std::set<std::string> ipList;
+    const auto startAddr = posnet::utils::StrToIpAddrArray(startIpAddr);
+    const auto endAddr = posnet::utils::StrToIpAddrArray(endIpAddr);
+    if (!startAddr || !endAddr) {
+        return {};
+    }
+
+    for (auto i = 0; i < startAddr->size(); ++i) {
+        const auto start = static_cast<uint32_t>(startAddr->at(i)); 
+        const auto end = static_cast<uint32_t>(endAddr->at(i));
+
+        if (start < end) {
+            auto address = *startAddr;
+            for (auto j = start; j <= end || j <= 254; ++j) {
+                address[i] = j;
+                auto addressSr = posnet::utils::IpAddrToStr(address);
+                if (!addressSr.empty()) {
+                    ipList.insert(std::move(addressSr));
+                }
+            }
+        }
+    }
+
+    ipList.insert(std::string(endIpAddr));
+    return ipList;
 }
 
 } //! namespace posnet::utils

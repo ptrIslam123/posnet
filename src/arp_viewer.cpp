@@ -9,7 +9,7 @@
 
 namespace {
 
-posnet::ArpViewer::HardwareType ExtractHardwareType(const uint16_t hardware)
+posnet::ArpViewer::HardwareType ExtractHardwareType(const std::uint16_t hardware)
 {
     using HardwareType = posnet::ArpViewer::HardwareType;
     switch (hardware) {
@@ -20,13 +20,13 @@ posnet::ArpViewer::HardwareType ExtractHardwareType(const uint16_t hardware)
     }
 }
 
-posnet::ArpViewer::ProtocolType ExtractProtocolType(const uint16_t protocol)
+posnet::ArpViewer::ProtocolType ExtractProtocolType(const std::uint16_t protocol)
 {
     using ProtocolType = posnet::ArpViewer::ProtocolType;
     return (protocol == 0x0800 ? ProtocolType::V4 : ProtocolType::V6);
 }
 
-posnet::ArpViewer::OpcodeType ExtractOpcodeType(const uint16_t opcode)
+posnet::ArpViewer::OpcodeType ExtractOpcodeType(const std::uint16_t opcode)
 {
     using OpcodeType = posnet::ArpViewer::OpcodeType;
     switch (opcode) {
@@ -80,7 +80,7 @@ namespace posnet {
 ArpViewer::ArpViewer(EthernetViewer ethernetViewer):
 BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(ethernetViewer.getStart()), ethernetViewer.getSize()),
 m_frame(reinterpret_cast<HeaderStructType*>(
-    ethernetViewer.getFrameHeaderStart() + EthernetViewer::DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES))
+    const_cast<ByteType*>(ethernetViewer.getStart() + EthernetViewer::DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES)))
 {}
 
 ArpViewer::ArpViewer(const RawFrameViewType rawFrame):
