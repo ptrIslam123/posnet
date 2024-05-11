@@ -39,13 +39,13 @@ include/frame-viewers/ip_viewer.h
 include/frame-viewers/udp_viewer.h
 include/frame-viewers/tcp_viewer.h
 include/frame-viewers/icmp_viewer.h
-include/frame-viewers/arp_viewer.h
+#include/frame-viewers/arp_viewer.h
 
 include/frame-builder/ethernet_builder.h
 include/frame-builder/ip_builder.h
 include/frame-builder/udp_builder.h
 include/frame-builder/icmp_builder.h
-include/frame-builder/arp_builder.h
+#include/frame-builder/arp_builder.h
 
 include/utils/lazy.h
 include/utils/result.h
@@ -65,7 +65,7 @@ src/ip_viewer.cpp
 src/udp_viewer.cpp
 src/tcp_viewer.cpp
 src/icmp_viewer.cpp
-src/arp_viewer.cpp
+#src/arp_viewer.cpp
 src/ethernet_builder.cpp
 src/ip_builder.cpp
 src/udp_builder.cpp
@@ -74,7 +74,7 @@ src/sock_addr_convertor.cpp
 src/algorithms.cpp
 src/base_frame.cpp
 src/icmp_builder.cpp
-src/arp_builder.cpp
+#src/arp_builder.cpp
 )
 
 message(STATUS "LIB_INSTALL_DIR=${CMAKE_BINARY_DIR}/lib")
@@ -98,7 +98,7 @@ set_target_properties(${LIB_NAME} PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
 if(BUILD_EXAMPLES)
     message(STATUS "BUILD_EXAMPLES=ON")
 
-    target_builder("frame_shiffer" "examples/frame_sniffer.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
+    #target_builder("frame_shiffer" "examples/frame_sniffer.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
     
     target_builder("l3_udp_client" "examples/l3_udp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
     target_builder("l2_udp_client" "examples/l2_udp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
@@ -106,10 +106,10 @@ if(BUILD_EXAMPLES)
     target_builder("l3_icmp_client" "examples/l3_icmp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
     target_builder("l2_icmp_client" "examples/l2_icmp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
 
-    target_builder("l2_arp_request" "examples/l2_arp_request.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
+    #target_builder("l2_arp_request" "examples/l2_arp_request.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
     target_builder("l2_native_arp_request" "examples/l2_native_arp_request.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
 
-    target_builder("bluetooth-dev-detector" "examples/bluetooth-dev-detector.cpp" "" "bluetooth" "" "examples")
+    #target_builder("bluetooth-dev-detector" "examples/bluetooth-dev-detector.cpp" "" "bluetooth" "" "examples")
 endif()
 
 #******************************************************* Build tools dir *******************************************************#

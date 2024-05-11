@@ -47,7 +47,7 @@ void PrintArpFrameInfo(const ConstRawFrameViewType rawFrameBuffer, std::ostream&
 
 void PrintRArpFrameInfo(const ConstRawFrameViewType rawFrameBuffer, std::ostream& os) {
     posnet::ArpViewer arpViewer(rawFrameBuffer);
-    os << "(!RARP frame)" << arpViewer << "\n";
+    os << arpViewer << "\n";
 }
 
 void PrintIpFrameInfo(const ConstRawFrameViewType rawFrameBuffer, std::ostream& os) {
@@ -85,14 +85,14 @@ void PrintFrameInfo(const ConstRawFrameViewType rawFrameBuffer, std::ostream& os
             PrintArpFrameInfo(rawFrameBuffer, os);
             break;
         }
-        case ProtocolType::IP: {
-            PrintIpFrameInfo(rawFrameBuffer, os);
-            break;
-        }
-        case ProtocolType::RARP: {
-            PrintRArpFrameInfo(rawFrameBuffer, os);
-            break;
-        }
+        // case ProtocolType::IP: {
+        //     PrintIpFrameInfo(rawFrameBuffer, os);
+        //     break;
+        // }
+        // case ProtocolType::RARP: {
+        //     PrintRArpFrameInfo(rawFrameBuffer, os);
+        //     break;
+        // }
         default: {
             os << "Unknown frame" << "\n";
             break;

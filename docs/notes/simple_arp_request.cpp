@@ -21,6 +21,7 @@
 #define MAC_BCAST_ADDR  "\xff\xff\xff\xff\xff\xff"
 #define IF_INTERFACE "eno1"
 
+// tcpdump arp host 10.110.15.10
 int main(int argc, char **argv)
 {
     int reqfd;

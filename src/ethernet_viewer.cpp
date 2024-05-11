@@ -43,7 +43,7 @@ EthernetViewer::ProtocolType EthernetViewer::getProtocol()
     switch (ntohs(m_frame->h_proto)) {
         using ProtocolType = EthernetViewer::ProtocolType;
         case ETH_P_IP: return ProtocolType::IP;
-        case ETH_P_ARP: return ProtocolType::ARP;
+        case ETH_P_ARP: return ProtocolType::ARP;   
         case ETH_P_RARP: return ProtocolType::RARP;
         default:
             return ProtocolType::Undefined;

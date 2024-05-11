@@ -43,6 +43,19 @@ public:
         uint8_t targetIp[4];
     };
 
+    /* Ethernet ARP packet from RFC 826 */
+    struct arp_ether_ipv4 {
+        uint16_t htype;   /* Format of hardware address */
+        uint16_t ptype;   /* Format of protocol address */
+        uint8_t hlen;    /* Length of hardware address */
+        uint8_t plen;    /* Length of protocol address */
+        uint16_t op;    /* ARP opcode (command) */
+        uint8_t sha[ETH_ALEN];  /* Sender hardware address */
+        uint32_t spa;   /* Sender IP address */
+        uint8_t tha[ETH_ALEN];  /* Target hardware address */
+        uint32_t tpa;   /* Target IP address */
+    } __attribute__((packed));
+
     static constexpr unsigned int DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES = sizeof(struct ArpHeader);
     
     using RawFrameViewType = EthernetViewer::RawFrameViewType;
