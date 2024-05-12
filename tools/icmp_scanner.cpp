@@ -51,7 +51,7 @@ void LOG(const std::string&& msg)
     std::cerr << msg << std::endl;
 }
 
-void usage()
+void Usage()
 {
     std::stringstream ss;
     ss << "Usage" << "\n";
@@ -201,7 +201,7 @@ int main(int argc, char** argv)
         const std::string_view option(argv[i]);
 
         if (const auto startPos = option.find(HELP_PARAM); startPos != std::string_view::npos) {
-            usage();
+            Usage();
             return EXIT_SUCCESS;
         }
 
@@ -297,6 +297,6 @@ int main(int argc, char** argv)
             LOG_ERROR(ss.str());
         }
     }
-
+    
     return EXIT_SUCCESS;
 }

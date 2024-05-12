@@ -13,13 +13,26 @@
 
 #define SRC_IP_ADDR "10.110.15.84"
 #define SRC_MAC_ADDR "58:11:22:06:96:bc"
-#define DST_IP_ADDR "10.110.15.10"
-#define DST_MAC_ADDR "50:eb:f6:9e:db:c8"
+#define DST_IP_ADDR "10.110.15.157"
+#define DST_MAC_ADDR "4:42:1a:2d:33:ad"`
 
 #define ETH_ALEN 6
 #define INLEN 4
 #define MAC_BCAST_ADDR  "\xff\xff\xff\xff\xff\xff"
 #define IF_INTERFACE "eno1"
+
+struct arp_hdr {
+    uint16_t htype;                 /* Format of hardware address */
+    uint16_t ptype;                 /* Format of protocol address */
+    uint8_t hlen;                   /* Length of hardware address */
+    uint8_t plen;                   /* Length of protocol address */
+    uint16_t op;                    /* ARP opcode (command) */
+    uint8_t sha[ETH_ALEN];          /* Sender hardware address */
+    uint8_t spa[4];                 /* Sender IP address */
+    uint8_t tha[ETH_ALEN];          /* Target hardware address */
+    uint8_t tpa[4];                 /* Target IP address */
+    uint8_t padding[18];
+} __attribute__((packed));
 
 // tcpdump arp host 10.110.15.10
 int main(int argc, char **argv)
@@ -29,7 +42,7 @@ int main(int argc, char **argv)
     struct sockaddr_ll reqsa;
     struct arp_pkt {
         struct ether_header eh;
-        struct ether_arp ea;
+        struct arp_hdr ea;
         u_char padding[18];
     } req;
 
@@ -48,27 +61,27 @@ int main(int argc, char **argv)
     req.eh.ether_type = htons(ETHERTYPE_ARP);
 
     /* Заполнение данных ARP */
-    req.ea.arp_hrd = htons(ARPHRD_ETHER);
-    req.ea.arp_pro = htons(ETHERTYPE_IP);
-    req.ea.arp_hln = ETH_ALEN;
-    req.ea.arp_pln = INLEN;
-    req.ea.arp_op = htons(ARPOP_REQUEST);
-    memset(req.ea.arp_sha, 0x00, ETH_ALEN); // Заполните это значением вашего MAC-адреса
+    req.ea.htype = htons(ARPHRD_ETHER);
+    req.ea.ptype = htons(ETHERTYPE_IP);
+    req.ea.hlen = ETH_ALEN;
+    req.ea.plen = INLEN;
+    req.ea.op = htons(ARPOP_REQUEST);
+    memset(req.ea.sha, 0x00, ETH_ALEN); // Заполните это значением вашего MAC-адреса
     {
         auto addr = posnet::utils::StrToMacAddr(SRC_MAC_ADDR);
         assert(addr);
-        memcpy(req.ea.arp_sha, addr->data(), addr->size());
+        memcpy(req.ea.sha, addr->data(), addr->size());
     }
-    memset(req.ea.arp_spa, 0x00, INLEN); // Заполните это значением вашего IP-адреса
+    memset(req.ea.spa, 0x00, INLEN); // Заполните это значением вашего IP-адреса
     {
         auto addr = posnet::utils::StrToIpAddrArray(SRC_IP_ADDR);
-        memcpy(req.ea.arp_spa, addr->data(), addr->size());
+        memcpy(req.ea.spa, addr->data(), addr->size());
     }
-    memset(req.ea.arp_tha, 0x00, ETH_ALEN); // Заполните это значением MAC-адреса назначения
-    memset(req.ea.arp_tpa, 0x00, INLEN); // Заполните это значением IP-адреса назначения
+    memset(req.ea.tha, 0x00, ETH_ALEN); // Заполните это значением MAC-адреса назначения
+    memset(req.ea.tpa, 0x00, INLEN); // Заполните это значением IP-адреса назначения
     {
         auto addr = posnet::utils::StrToIpAddrArray(DST_IP_ADDR);
-        memcpy(req.ea.arp_tpa, addr->data(), addr->size());
+        memcpy(req.ea.tpa, addr->data(), addr->size());
     }
 
     if(sendto(reqfd, &req, sizeof(req), 0, (struct sockaddr *)&reqsa, sizeof(reqsa)) <= 0) {

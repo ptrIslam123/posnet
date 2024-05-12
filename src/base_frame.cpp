@@ -1,14 +1,27 @@
 #include "include/base_frame.h"
 
+#include <cstring>
+
 namespace posnet {
     
-BaseFrame::BaseFrame(const ByteType *const frameStart, const SizeType frameSize, const std::optional<FrameInfo> info):
+BaseFrame::BaseFrame(const ByteType *const frameStart, const SizeType frameSize):
 m_start(frameStart),
-m_size(frameSize),
-m_info(info)
+m_size(frameSize)
 {}
 
 BaseFrame::~BaseFrame() = default;
+
+BaseFrame::SizeType BaseFrame::serialize(const RawFrameViewType outBuffer)
+{
+    std::memcpy(outBuffer.data(), getStart(), getSize());
+    return getSize();
+}
+
+BaseFrame::SizeType BaseFrame::serialize(const RawFrameViewType outBuffer) const
+{
+    std::memcpy(outBuffer.data(), getStart(), getSize());
+    return getSize();
+}
 
 BaseFrame::ConstRawFrameViewType BaseFrame::getAsRawFrameView() const
 {
@@ -18,16 +31,6 @@ BaseFrame::ConstRawFrameViewType BaseFrame::getAsRawFrameView() const
 BaseFrame::ConstRawFrameViewType BaseFrame::getAsRawFrameView()
 {
     return ConstRawFrameViewType{ getStart(), getSize() };
-}
-
-std::optional<BaseFrame::FrameInfo> BaseFrame::getFrameInfo() const
-{
-    return m_info;
-}
-
-std::optional<BaseFrame::FrameInfo> BaseFrame::getFrameInfo()
-{
-    return m_info;
 }
 
 void BaseFrame::setFrameSize(const SizeType size)

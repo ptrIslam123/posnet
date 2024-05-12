@@ -10,7 +10,18 @@
 #include <sstream>
 #include <cstring>
 
+#define THROW(msg) (throw BadIpPackage(msg));
+
 namespace posnet {
+
+BadIpPackage::BadIpPackage(const std::string_view msg):
+m_msg(msg)
+{}
+
+const char* BadIpPackage::what() const noexcept
+{
+    return m_msg.data();
+}
     
 IpBuilder::IpBuilder():
 BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(&m_frame), DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES),
@@ -31,8 +42,9 @@ IpBuilder& IpBuilder::setVersion(const VersionType version) &
             break;
         }
         default:
-            throw std::runtime_error("Undefined version of ip frame=" + 
-                std::to_string(static_cast<unsigned int>(version)));
+            const auto errMsg = "Undefined version of ip frame=" + 
+                std::to_string(static_cast<unsigned int>(version));
+            THROW(errMsg)
     }
 
     return *this;
@@ -54,8 +66,9 @@ IpBuilder& IpBuilder::setProtocol(const ProtocolType protocol) &
             break;
         }
         default:
-            throw std::runtime_error("Undefined protocol type of ip frame=" + 
-                std::to_string(static_cast<unsigned int>(protocol)));
+            const auto errMsg = "Undefined protocol type of ip frame=" + 
+                std::to_string(static_cast<unsigned int>(protocol));
+            THROW(errMsg)
     }
 
     return *this;
@@ -143,7 +156,7 @@ IpBuilder& IpBuilder::setSourceIpAddress(const std::string_view ipAddr) &
     } else {
         std::stringstream ss;
         ss << "Could not set source ip-address for=" << ipAddr << ". Invalid ip-address";
-        throw std::runtime_error(ss.str());
+        THROW(ss.str())
     }
     return *this;
 }
@@ -156,7 +169,7 @@ IpBuilder& IpBuilder::setDestIpAddress(const std::string_view ipAddr) &
     } else {
          std::stringstream ss;
         ss << "Could not set destination ip-address for=" << ipAddr << ". Invalid ip-address";
-        throw std::runtime_error(ss.str());
+        THROW(ss.str())
     }
     return *this;
 }

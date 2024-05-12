@@ -4,10 +4,21 @@
 #include "include/base_frame.h"
 #include "include/frame-viewers/ethernet_viewer.h"
 
+#include <string>
+#include <string_view>
+#include <exception>
 #include <ostream>
 
 namespace posnet {
     
+class BadEthernetPackage final : public std::exception {
+public:
+    explicit BadEthernetPackage(std::string_view msg);
+    virtual const char* what() const noexcept;
+private:
+    std::string m_msg;
+};
+
 class EthernetBuilder final : public BaseFrame {
 public:
     static constexpr unsigned int DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES = EthernetViewer::DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES;

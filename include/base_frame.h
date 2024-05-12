@@ -5,6 +5,7 @@
 
 #include <span>
 #include <optional>
+#include <ostream>
 
 namespace posnet {
 
@@ -15,9 +16,7 @@ public:
     using RawFrameViewType = def::RawFrameViewType;
     using ConstRawFrameViewType = def::ConstRawFrameViewType;
 
-    struct FrameInfo {};
-
-    explicit BaseFrame(const ByteType* frameStart, SizeType frameSize, std::optional<FrameInfo> info = std::nullopt);
+    explicit BaseFrame(const ByteType* frameStart, SizeType frameSize);
     virtual ~BaseFrame() = 0;
 
     const ByteType* getStart() const;
@@ -29,17 +28,17 @@ public:
     ConstRawFrameViewType getAsRawFrameView() const;
     ConstRawFrameViewType getAsRawFrameView();
 
-    std::optional<FrameInfo> getFrameInfo() const;
-    std::optional<FrameInfo> getFrameInfo();
+    SizeType serialize(RawFrameViewType outBuffer);
+    SizeType serialize(RawFrameViewType outBuffer) const;
+
 protected:
     void setFrameSize(SizeType size);
 
 private:
     const ByteType* m_start;
     SizeType m_size;
-    const std::optional<FrameInfo> m_info;
 };
-    
+
 } // namespace posnet
 
 

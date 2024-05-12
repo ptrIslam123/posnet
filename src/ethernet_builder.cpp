@@ -8,8 +8,19 @@
 
 #include <netinet/in.h>
 
+#define THROW(msg) (throw BadEthernetPackage(msg));
+
 namespace posnet {
     
+BadEthernetPackage::BadEthernetPackage(const std::string_view msg):
+m_msg(msg)
+{}
+
+const char* BadEthernetPackage::what() const noexcept
+{
+    return m_msg.data();
+}
+
 EthernetBuilder::EthernetBuilder():
 BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(&m_frame), DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES),
 m_frame()
@@ -25,7 +36,7 @@ EthernetBuilder& EthernetBuilder::setDestMacAddress(const std::string_view macAd
     } else {
         std::stringstream ss;
         ss << "Could not convert destination str mac-address=" << macAddr << " to binary mac-address. Invalid str mac-address";
-        throw std::runtime_error(ss.str());
+        THROW(ss.str())
     }
     return *this;
 }
@@ -38,7 +49,7 @@ EthernetBuilder& EthernetBuilder::setSourceMacAddress(const std::string_view mac
     } else {
         std::stringstream ss;
         ss << "Could not convert source str mac-address=" << macAddr << " to binary mac-address. Invalid str mac-address";
-        throw std::runtime_error(ss.str());
+        THROW(ss.str())
     }
     return *this;
 }
@@ -59,7 +70,7 @@ EthernetBuilder& EthernetBuilder::setProtocol(const ProtocolType protocol) &
             break;
         }
         default:
-            throw std::runtime_error("Could not set ethernet protocol type(Undefined EthernetViewer::ProtocolType)");
+            THROW("Could not set ethernet protocol type(Undefined EthernetViewer::ProtocolType)")
     }
 
     return *this;

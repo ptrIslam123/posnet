@@ -11,10 +11,12 @@
 
 #include <net/if.h>
 
+#include "definitions.h"
+
 namespace posnet::utils {
-    
-constexpr auto MAC_ADDRESS_LENGTH_IN_BYTES = 6;
-constexpr auto IP_ADDRESS_LENGTH_IN_BYTES = 4;
+
+constexpr auto MAC_ADDRESS_LENGTH_IN_BYTES = posnet::def::MAC_ADDRESS_LENGTH_IN_BYTES;
+constexpr auto IP_ADDRESS_LENGTH_IN_BYTES = posnet::def::IP_ADDRESS_LENGTH_IN_BYTES;
 
 std::string MacAddrToStr(std::span<uint8_t, MAC_ADDRESS_LENGTH_IN_BYTES> macAddr);
 std::string MacAddrToStr(const struct sockaddr& macAddr);

@@ -7,48 +7,22 @@
 
 #include <cstring>
 
+#define THROW(msg) (throw BadArpPackage(msg));
+
 namespace {
-
-std::optional<std::uint16_t> ExtractHardwareType(const posnet::ArpViewer::HardwareType hardware)
-{
-    using HardwareType = posnet::ArpViewer::HardwareType;
-    switch (hardware) {
-        case HardwareType::ARP: return 1;
-        case HardwareType::RARP: return 0;
-        default:
-            return std::nullopt;
-    }
-}
-
-std::optional<std::uint16_t> ExtractProtocolType(const posnet::ArpViewer::ProtocolType protocol)
-{
-    using ProtocolType = posnet::ArpViewer::ProtocolType;
-    switch (protocol) {
-        case ProtocolType::V4: return ETH_P_IP;
-        case ProtocolType::V6: 
-        default: 
-            return std::nullopt;
-    }
-}
-
-std::optional<std::uint16_t> ExtractOpcodeType(const posnet::ArpViewer::OpcodeType opcode)
-{
-    using OpcodeType = posnet::ArpViewer::OpcodeType;
-    switch (opcode) {
-        case OpcodeType::ArpRequest: return ARPOP_REQUEST;
-        case OpcodeType::ArpReply: return ARPOP_REPLY;
-        case OpcodeType::RArpRequest: return ARPOP_RREQUEST;
-        case OpcodeType::RArpReply: return ARPOP_RREPLY;
-        case OpcodeType::InArpRequest: return ARPOP_InREQUEST;
-        case OpcodeType::InArpReply: return ARPOP_InREPLY;
-        default:
-            return std::nullopt;
-    }
-}
 
 } //! namespace
 
 namespace posnet {
+
+BadArpPackage::BadArpPackage(const std::string_view msg):
+m_msg(msg)
+{}
+
+const char* BadArpPackage::what() const noexcept
+{
+    return m_msg.data();
+}
 
 ArpBuilder::ArpBuilder():
 BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(&m_frame), DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES),
@@ -59,108 +33,101 @@ m_frame()
 
 ArpBuilder& ArpBuilder::setHardwareType(const HardwareType type) &
 {
-    const auto typeValue = ExtractHardwareType(type);
-    if (typeValue) {
-        m_frame.hardwareType = htons(*typeValue);
-    } else {
-        throw std::runtime_error("");
+    const auto value = ArpViewer::HardwareTypeToNative(type);
+    if (!value) {
+        THROW("Unknown hardware address type")
     }
 
+    m_frame.ar_hrd = htons(*value);
     return *this;
 }
 
 ArpBuilder& ArpBuilder::setProtocolType(const ProtocolType protocol) &
 {
-    const auto protocolValue =  ExtractProtocolType(protocol);
-    if (protocolValue) {
-        m_frame.protoType = htons(*protocolValue);
-    } else {
-        throw std::runtime_error("");
+    const auto value = ArpViewer::ProtocolTypeToNative(protocol);
+    if (!value) {
+        THROW("Unknown protocol address type")
     }
 
+    m_frame.ar_pro = htons(*value);
     return *this;
 }
 
-ArpBuilder& ArpBuilder::setOpcode(const OpcodeType opcode) &
+ArpBuilder& ArpBuilder::setOpcodeType(const OpcodeType opcode) &
 {
-    const auto opcodeValue = ExtractOpcodeType(opcode);
-    if (opcodeValue) {
-        m_frame.opcode = htons(*opcodeValue);
-    } else {
-        throw std::runtime_error("");
+    const auto value = ArpViewer::OpcodeTypeToNative(opcode);
+    if (!value) {
+        THROW("Unknown opcode type")
     }
 
+    m_frame.ar_op = htons(*value);
     return *this;
 }
 
-ArpBuilder& ArpBuilder::setSenderMacAddressAsStr(const std::string_view senderMacAddr) &
+ArpBuilder& ArpBuilder::setHardwareTypeLength(const unsigned int length) &
 {
-    auto macAddr = utils::StrToMacAddr(senderMacAddr);
-    if (macAddr) {
-        std::memcpy(m_frame.senderMac, macAddr->data(), macAddr->size());
-    } else {
-        throw std::runtime_error("");
+    m_frame.ar_hln = length;
+    return *this;
+}
+
+ArpBuilder& ArpBuilder::setProtocolTypeLength(const unsigned int length) &
+{
+    m_frame.ar_pln = length;
+    return *this;
+}
+
+ArpBuilder& ArpBuilder::setSourceMacAddress(const std::string_view macAddr) &
+{
+    const auto addr = utils::StrToMacAddr(macAddr);
+    if (!addr) {
+        THROW("Bad source mac address format=" + std::string(macAddr))
     }
 
+    std::memcpy(m_frame.arp_sha, addr->data(), addr->size());
     return *this;
 }
 
-ArpBuilder& ArpBuilder::setTargetMacAddressAsStr(const std::string_view targetMacAddr) &
+ArpBuilder& ArpBuilder::setSourceIpAddress(const std::string_view ipAddr) &
 {
-    auto macAddr = utils::StrToMacAddr(targetMacAddr);
-    if (macAddr) {
-        std::memcpy(m_frame.targetMac, macAddr->data(), macAddr->size());
-    } else {
-        throw std::runtime_error("");
+    const auto addr = utils::StrToIpAddrArray(ipAddr);
+    if (!addr) {
+        THROW("Bad source ip address format=" + std::string(ipAddr))
     }
 
+    std::memcpy(m_frame.arp_spa, addr->data(), addr->size());
     return *this;
 }
 
-ArpBuilder& ArpBuilder::setSenderIpAddressAsStr(const std::string_view senderIpAddr) &
+ArpBuilder& ArpBuilder::seTargetMacAddress(const std::string_view macAddr) &
 {
-    auto ipAddr = utils::StrToIpAddrArray(senderIpAddr);
-    if (ipAddr) {
-        std::memcpy(m_frame.senderIp, ipAddr->data(), ipAddr->size());
-    } else {
-        throw std::runtime_error("");
+    const auto addr = utils::StrToMacAddr(macAddr);
+    if (!addr) {
+        THROW("Bad target mac address format=" + std::string(macAddr))
     }
 
+    std::memcpy(m_frame.arp_tha, addr->data(), addr->size());
     return *this;
 }
 
-ArpBuilder& ArpBuilder::setTargetIpAddressAsStr(const std::string_view targetIpAddr) &
+ArpBuilder& ArpBuilder::setTargetIpAddress(const std::string_view ipAddr) &
 {
-    auto ipAddr = utils::StrToIpAddrArray(targetIpAddr);
-    if (ipAddr) {
-        std::memcpy(m_frame.targetIp, ipAddr->data(), ipAddr->size());
-    } else {
-        throw std::runtime_error("");
+    const auto addr = utils::StrToIpAddrArray(ipAddr);
+    if (!addr) {
+        THROW("Bad target ip address format=" + std::string(ipAddr))
     }
 
+    std::memcpy(m_frame.arp_tpa, addr->data(), addr->size());
     return *this;
-}
-
-ArpBuilder& ArpBuilder::setHardwareLength(const std::uint8_t length) &
-{
-    m_frame.hardwareLen = htons(length);
-    return *this;
-}
-
-ArpBuilder& ArpBuilder::setProtocolLength(const std::uint8_t length) &
-{
-    m_frame.protoLen = htons(length);
-    return *this;    
 }
 
 std::ostream& ArpBuilder::operator<<(std::ostream& os) const
 {
-    return os << ArpViewer(getAsRawFrameView());
+    return os; // << ArpViewer(getAsRawFrameView());
 }
 
 std::ostream& ArpBuilder::operator<<(std::ostream& os)
 {
-    return os << ArpViewer(getAsRawFrameView());
+    return os; // << ArpViewer(getAsRawFrameView());
 }
 
 std::ostream& operator<<(std::ostream& os, const ArpBuilder& arpBuilder)

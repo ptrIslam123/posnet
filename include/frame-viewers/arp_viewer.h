@@ -7,6 +7,7 @@
 #include <string>
 #include <string_view>
 #include <ostream>
+#include <optional>
 
 namespace posnet {
 
@@ -31,45 +32,32 @@ namespace posnet {
  */
 class ArpViewer final : public BaseFrame {
 public:
-    struct ArpHeader {
-        uint16_t hardwareType;
-        uint16_t protoType;
-        uint8_t hardwareLen;
-        uint8_t protoLen;
-        uint16_t opcode;
-        uint8_t senderMac[6];
-        uint8_t senderIp[4];
-        uint8_t targetMac[6];
-        uint8_t targetIp[4];
-    };
-
     /* Ethernet ARP packet from RFC 826 */
-    struct arp_ether_ipv4 {
-        uint16_t htype;   /* Format of hardware address */
-        uint16_t ptype;   /* Format of protocol address */
-        uint8_t hlen;    /* Length of hardware address */
-        uint8_t plen;    /* Length of protocol address */
-        uint16_t op;    /* ARP opcode (command) */
-        uint8_t sha[ETH_ALEN];  /* Sender hardware address */
-        uint32_t spa;   /* Sender IP address */
-        uint8_t tha[ETH_ALEN];  /* Target hardware address */
-        uint32_t tpa;   /* Target IP address */
+    struct arphdr final {
+        uint16_t ar_hrd;		/* Format of hardware address.  */
+        uint16_t ar_pro;		/* Format of protocol address.  */
+        uint8_t ar_hln;		/* Length of hardware address.  */
+        uint8_t ar_pln;		/* Length of protocol address.  */
+        uint16_t ar_op;		/* ARP opcode (command).  */
+        uint8_t arp_sha[ETH_ALEN];	/* sender hardware address */
+        uint8_t arp_spa[4];		/* sender protocol(ip) address */
+        uint8_t arp_tha[ETH_ALEN];	/* target hardware address */
+        uint8_t arp_tpa[4];	        /* target protocol(ip) address */
+        uint8_t padding[18];
     } __attribute__((packed));
 
-    static constexpr unsigned int DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES = sizeof(struct ArpHeader);
+    static constexpr unsigned int DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES = sizeof(struct arphdr);
     
     using RawFrameViewType = EthernetViewer::RawFrameViewType;
     using ConstRawFrameViewType = EthernetViewer::ConstRawFrameViewType;
-    using HeaderStructType = struct ArpHeader;
+    using HeaderStructType = struct arphdr;
 
     enum class HardwareType {
-        ARP, 
-        RARP,
-        Undefined,
+        EthernetHeader,
     };
 
     enum class ProtocolType {
-        V4, V6,
+        IP
     };
 
     enum class OpcodeType {
@@ -86,36 +74,40 @@ public:
     explicit ArpViewer(RawFrameViewType rawFrame);
     explicit ArpViewer(ConstRawFrameViewType rawFrame);
 
-    HardwareType getHardwareType();
-    std::string_view getHardwareTypeAsStr();
-    ProtocolType getProtocolType();
-    std::string_view getProtocolTypeAsStr();
-    OpcodeType getOpcode();
-    std::string_view getOpcodeAsStr();
-    std::string getSenderMacAddressAsStr();
-    std::string getTargetMacAddressAsStr();
-    std::string getSenderIpAddressAsStr();
-    std::string getTargetIpAddressAsStr();
-    std::uint8_t* getFrameHeaderStart();
+    // HardwareType getHardwareType();
+    // std::string_view getHardwareTypeAsStr();
+    // ProtocolType getProtocolType();
+    // std::string_view getProtocolTypeAsStr();
+    // OpcodeType getOpcode();
+    // std::string_view getOpcodeAsStr();
+    // std::string getSenderMacAddressAsStr();
+    // std::string getTargetMacAddressAsStr();
+    // std::string getSenderIpAddressAsStr();
+    // std::string getTargetIpAddressAsStr();
+    // std::uint8_t* getFrameHeaderStart();
     
-    HardwareType getHardwareType() const;
-    std::string_view getHardwareTypeAsStr() const;
-    ProtocolType getProtocolType() const;
-    std::string_view getProtocolTypeAsStr() const;
-    OpcodeType getOpcode() const;
-    std::string_view getOpcodeAsStr() const;
-    std::string getSenderMacAddressAsStr() const;
-    std::string getTargetMacAddressAsStr() const;
-    std::string getSenderIpAddressAsStr() const;
-    std::string getTargetIpAddressAsStr() const;
+    // HardwareType getHardwareType() const;
+    // std::string_view getHardwareTypeAsStr() const;
+    // ProtocolType getProtocolType() const;
+    // std::string_view getProtocolTypeAsStr() const;
+    // OpcodeType getOpcode() const;
+    // std::string_view getOpcodeAsStr() const;
+    // std::string getSenderMacAddressAsStr() const;
+    // std::string getTargetMacAddressAsStr() const;
+    // std::string getSenderIpAddressAsStr() const;
+    // std::string getTargetIpAddressAsStr() const;
 
-    std::ostream& operator<<(std::ostream& os) const;
+    //std::ostream& operator<<(std::ostream& os) const;
+
+    static std::optional<uint16_t> HardwareTypeToNative(HardwareType hardware);
+    static std::optional<uint16_t> ProtocolTypeToNative(ProtocolType protocol);
+    static std::optional<uint16_t> OpcodeTypeToNative(OpcodeType opcode);
 
 private:
     HeaderStructType* m_frame;
 };
 
-std::ostream& operator<<(std::ostream& os, const ArpViewer& arpViewer);
+//std::ostream& operator<<(std::ostream& os, const ArpViewer& arpViewer);
 
 } //! namespace posnet
 
