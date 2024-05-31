@@ -1,0 +1,1 @@
+cmd_/home/islam/cpp/net/posnet/kernel-modules/firewall/package-filter/net_filter.mod := printf '%s\n'   net_filter.o | awk '!x[$$0]++ { print("/home/islam/cpp/net/posnet/kernel-modules/firewall/package-filter/"$$0) }' > /home/islam/cpp/net/posnet/kernel-modules/firewall/package-filter/net_filter.mod

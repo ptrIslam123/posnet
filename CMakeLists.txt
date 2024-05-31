@@ -6,6 +6,8 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 option(BUILD_EXAMPLES "Build the examples" ON)
 option(BUILD_TOOLS "Build the tools" ON)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=thread -g") # enable thread sanitize
+
 if(Win32)
     message("Not supported platform. Only POSIX system")
 endif()
@@ -25,7 +27,7 @@ endfunction(target_builder)
 set(CMAKE_CXX_STANDARD 20)
 
 #******************************************************* Building posnet library *******************************************************#
-set(LIB_NAME ${PROJECT_NAME}Core)
+set(LIB_NAME ${PROJECT_NAME}_core)
 set(LIB_DIRS ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/include)
 message(STATUS "POSNET_DIRS=${LIB_DIRS}")
 
@@ -40,20 +42,29 @@ include/frame-viewers/udp_viewer.h
 include/frame-viewers/tcp_viewer.h
 include/frame-viewers/icmp_viewer.h
 include/frame-viewers/arp_viewer.h
+include/frame-viewers/dns_viewer.h
 
 include/frame-builder/ethernet_builder.h
 include/frame-builder/ip_builder.h
 include/frame-builder/udp_builder.h
 include/frame-builder/icmp_builder.h
 include/frame-builder/arp_builder.h
+include/frame-builder/dns_builder.h
+
+include/utils/io/async/poll/poll.h
+include/utils/io/sync/streambuffer/istreambuffer.h
+include/utils/io/sync/streambuffer/ostreambuffer.h
+include/utils/io/sync/streambuffer/streambuffer.h
 
 include/utils/lazy.h
 include/utils/result.h
 include/utils/scoped_lock.h
-include/utils/strict_mutex.h
+include/utils/synchronizers/strict_mutex.h
+include/utils/synchronizers/synchronized.h
 include/utils/system_error.h
 include/utils/sock_addr_convertor.h
 include/utils/algorithms.h
+include/utils/args_parser.h
 include/definitions.h
 include/base_frame.h
 )
@@ -75,6 +86,10 @@ src/algorithms.cpp
 src/base_frame.cpp
 src/icmp_builder.cpp
 src/arp_builder.cpp
+src/poll.cpp
+src/args_parser.cpp
+src/dns_builder.cpp
+src/dns_viewer.cpp
 )
 
 message(STATUS "LIB_INSTALL_DIR=${CMAKE_BINARY_DIR}/lib")
@@ -100,19 +115,28 @@ if(BUILD_EXAMPLES)
 
     #target_builder("frame_shiffer" "examples/frame_sniffer.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
     
-    target_builder("l3_udp_client" "examples/l3_udp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
-    target_builder("l2_udp_client" "examples/l2_udp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
+    target_builder("l3-udp-client" "examples/l3_udp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
+    target_builder("l2-udp-client" "examples/l2_udp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
     
-    target_builder("l3_icmp_client" "examples/l3_icmp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
-    target_builder("l2_icmp_client" "examples/l2_icmp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
+    target_builder("l3-icmp-client" "examples/l3_icmp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
+    target_builder("l2-icmp-client" "examples/l2_icmp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
 
-    target_builder("l2_arp_request" "examples/l2_arp_request.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
+    target_builder("l2-arp-request" "examples/l2_arp_request.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
+
+    target_builder("http-server" "examples/http_server.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
+
+    target_builder("dns-client" "examples/dns_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
+    target_builder("dns-server" "examples/dns_server.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
+
+    target_builder("mdns-question" "examples/mdns_question.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
 endif()
 
 #******************************************************* Build tools dir *******************************************************#
 if(BUILD_TOOLS)
     message(STATUS "BUILD_TOOLS=ON")
 
-    target_builder("udp-server" "tools/udp_server.cpp" "" "" "" "tools")
+    target_builder("udp-server" "tools/udp_server.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "tools")
     target_builder("icmp-scanner" "tools/icmp_scanner.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "tools")
+    target_builder("arp-scanner" "tools/arp_scanner.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "tools")
+    target_builder("tcp-server" "tools/tcp_server.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "tools")
 endif()

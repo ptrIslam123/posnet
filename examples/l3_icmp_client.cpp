@@ -22,6 +22,7 @@
 #include <sys/socket.h>
 
 #define DEBUG
+//! Does not work yet!!!!!
 
 int main() {
     // public ip address of goog`s dns service

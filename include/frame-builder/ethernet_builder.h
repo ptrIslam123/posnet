@@ -3,6 +3,7 @@
 
 #include "include/base_frame.h"
 #include "include/frame-viewers/ethernet_viewer.h"
+#include "include/utils/io/sync/streambuffer/istreambuffer.h"
 
 #include <string>
 #include <string_view>
@@ -27,6 +28,8 @@ public:
     using ConstRawVieType = EthernetViewer::ConstRawFrameViewType;
     using HeaderStructType = EthernetViewer::HeaderStructType;
     using ProtocolType = EthernetViewer::ProtocolType;
+    template<typename Allocator>
+    using IStreamBuffer = posnet::utils::io::IStreamBuffer<Allocator>;
 
     explicit EthernetBuilder();
 
@@ -47,6 +50,22 @@ private:
 
 std::ostream& operator<<(std::ostream& os, const EthernetBuilder& ethernetBuilder);
 std::ostream& operator<<(std::ostream& os, EthernetBuilder& ethernetBuilder);
+
+template<typename Allocator>
+EthernetBuilder::IStreamBuffer<Allocator>& operator<<(EthernetBuilder::IStreamBuffer<Allocator>& istreamBuffer, EthernetBuilder& ethernetBuilder)
+{
+    BaseFrame& frame = ethernetBuilder;
+    istreamBuffer << frame;
+    return istreamBuffer;
+}
+
+template<typename Allocator>
+EthernetBuilder::IStreamBuffer<Allocator>& operator<<(EthernetBuilder::IStreamBuffer<Allocator>& istreamBuffer, const EthernetBuilder& ethernetBuilder)
+{
+    const BaseFrame& frame = ethernetBuilder;
+    istreamBuffer << frame;
+    return istreamBuffer;
+}
 
 } // namespace posnet
 

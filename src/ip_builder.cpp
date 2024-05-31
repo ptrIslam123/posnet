@@ -150,7 +150,7 @@ IpBuilder& IpBuilder::setCheckSum(const unsigned int checkSum) &
 
 IpBuilder& IpBuilder::setSourceIpAddress(const std::string_view ipAddr) &
 {
-    const auto result = posnet::utils::StrToIpAddr(ipAddr);
+    const auto result = posnet::utils::v4::StrToIpAddr(ipAddr);
     if (result) {
         m_frame.saddr = *result;
     } else {
@@ -163,7 +163,7 @@ IpBuilder& IpBuilder::setSourceIpAddress(const std::string_view ipAddr) &
 
 IpBuilder& IpBuilder::setDestIpAddress(const std::string_view ipAddr) &
 {
-    const auto result = posnet::utils::StrToIpAddr(ipAddr);
+    const auto result = posnet::utils::v4::StrToIpAddr(ipAddr);
     if (result) {
         m_frame.daddr = *result;
     } else {

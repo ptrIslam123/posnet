@@ -58,16 +58,15 @@ inline ScopedLock<T>::ScopedLock(C lockCallback, T unlockCallback) :
 template<typename T>
 inline ScopedLock<T>::~ScopedLock()
 {
-    unlock();
+    if (m_unlockCallback.has_value()) {
+        m_unlockCallback.value()();
+    }
 }
 
 template<typename T>
 inline void ScopedLock<T>::unlock()
 {
-    if (!wasUnlocked()) {
-        m_unlockCallback.value()();
-        m_unlockCallback.reset();
-    }
+   m_unlockCallback.reset();
 }
 
 template<typename T>

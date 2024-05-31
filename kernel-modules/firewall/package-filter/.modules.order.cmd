@@ -1,0 +1,1 @@
+cmd_/home/islam/cpp/net/posnet/kernel-modules/firewall/package-filter/modules.order := {   echo /home/islam/cpp/net/posnet/kernel-modules/firewall/package-filter/net_filter.ko; :; } > /home/islam/cpp/net/posnet/kernel-modules/firewall/package-filter/modules.order

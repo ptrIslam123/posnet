@@ -99,12 +99,12 @@ unsigned int IpViewer::getCheckSum()
 
 std::string IpViewer::getSourceIpAddressAsStr()
 {
-    return posnet::utils::IpAddrToStr(m_frame->saddr);
+    return posnet::utils::v4::IpAddrToStr(m_frame->saddr);
 }
 
 std::string IpViewer::getDestIpAddressAsStr()
 {
-    return posnet::utils::IpAddrToStr(m_frame->daddr);
+    return posnet::utils::v4::IpAddrToStr(m_frame->daddr);
 }
 
 IpViewer::VersionType IpViewer::getVersion() const
@@ -165,12 +165,12 @@ unsigned int IpViewer::getCheckSum() const
 
 std::string IpViewer::getSourceIpAddressAsStr() const
 {
-    return posnet::utils::IpAddrToStr(m_frame->saddr);
+    return posnet::utils::v4::IpAddrToStr(m_frame->saddr);
 }
 
 std::string IpViewer::getDestIpAddressAsStr() const
 {
-    return posnet::utils::IpAddrToStr(m_frame->daddr);
+    return posnet::utils::v4::IpAddrToStr(m_frame->daddr);
 }
 
 std::uint8_t* IpViewer::getFrameHeaderStart()
