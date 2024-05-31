@@ -16,7 +16,7 @@ using ConstBufferViewType = std::span<const ByteType>;
 using RawFrameViewType = BufferViewType;
 using ConstRawFrameViewType = ConstBufferViewType;
 
-constexpr std::string_view MAC_BROAD_CAST_ADDR = "FF:FF:FF:FF:FF:FF"; //    "\xff\xff\xff\xff\xff\xff";
+constexpr std::string_view MAC_BROAD_CAST_ADDR = "FF:FF:FF:FF:FF:FF";
 constexpr auto MAC_ADDRESS_LENGTH_IN_BYTES = 6;
 constexpr auto IP_ADDRESS_LENGTH_IN_BYTES = 4;
 

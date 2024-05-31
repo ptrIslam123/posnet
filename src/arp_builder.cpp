@@ -2,7 +2,6 @@
 
 #include "utils/sock_addr_convertor.h"
 
-//#include <net/if_arp.h>
 #include <netinet/in.h>
 
 #include <cstring>
@@ -15,15 +14,6 @@ namespace {
 
 namespace posnet {
 
-BadArpPackage::BadArpPackage(const std::string_view msg):
-m_msg(msg)
-{}
-
-const char* BadArpPackage::what() const noexcept
-{
-    return m_msg.data();
-}
-
 ArpBuilder::ArpBuilder():
 BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(&m_frame), DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES),
 m_frame()
@@ -33,7 +23,7 @@ m_frame()
 
 ArpBuilder& ArpBuilder::setHardwareType(const HardwareType type) &
 {
-    const auto value = ArpViewer::HardwareTypeToNative(type);
+    const auto value = ArpBuilder::HardwareTypeToNative(type);
     if (!value) {
         THROW("Unknown hardware address type")
     }
@@ -44,7 +34,7 @@ ArpBuilder& ArpBuilder::setHardwareType(const HardwareType type) &
 
 ArpBuilder& ArpBuilder::setProtocolType(const ProtocolType protocol) &
 {
-    const auto value = ArpViewer::ProtocolTypeToNative(protocol);
+    const auto value = ArpBuilder::ProtocolTypeToNative(protocol);
     if (!value) {
         THROW("Unknown protocol address type")
     }
@@ -55,7 +45,7 @@ ArpBuilder& ArpBuilder::setProtocolType(const ProtocolType protocol) &
 
 ArpBuilder& ArpBuilder::setOpcodeType(const OpcodeType opcode) &
 {
-    const auto value = ArpViewer::OpcodeTypeToNative(opcode);
+    const auto value = ArpBuilder::OpcodeTypeToNative(opcode);
     if (!value) {
         THROW("Unknown opcode type")
     }
@@ -122,12 +112,12 @@ ArpBuilder& ArpBuilder::setTargetIpAddress(const std::string_view ipAddr) &
 
 std::ostream& ArpBuilder::operator<<(std::ostream& os) const
 {
-    return os; // << ArpViewer(getAsRawFrameView());
+    return os << ArpViewer(getAsRawFrameView());
 }
 
 std::ostream& ArpBuilder::operator<<(std::ostream& os)
 {
-    return os; // << ArpViewer(getAsRawFrameView());
+    return os << ArpViewer(getAsRawFrameView());
 }
 
 std::ostream& operator<<(std::ostream& os, const ArpBuilder& arpBuilder)
@@ -138,6 +128,35 @@ std::ostream& operator<<(std::ostream& os, const ArpBuilder& arpBuilder)
 std::ostream& operator<<(std::ostream& os, ArpBuilder& arpBuilder)
 {
     return arpBuilder.operator<<(os);
+}
+
+std::optional<uint16_t> ArpBuilder::HardwareTypeToNative(const HardwareType hardware)
+{
+    switch (hardware) {
+        case HardwareType::EthernetHeader : return ARPHRD_ETHER;
+        default: return std::nullopt;
+    }
+}
+
+std::optional<uint16_t> ArpBuilder::ProtocolTypeToNative(const ProtocolType protocol)
+{
+    switch (protocol) {
+        case ProtocolType::IP: return ETHERTYPE_IP;
+        default: return std::nullopt;
+    }
+}
+
+std::optional<uint16_t> ArpBuilder::OpcodeTypeToNative(const OpcodeType opcode)
+{
+    switch (opcode) {
+        case OpcodeType::ArpRequest: return ARPOP_REQUEST;
+        case OpcodeType::ArpReply: return ARPOP_REPLY;
+        case OpcodeType::RArpRequest : return ARPOP_RREQUEST;
+        case OpcodeType::RArpReply: return ARPOP_RREPLY;
+        case OpcodeType::InArpRequest: return ARPOP_InREQUEST;
+        case OpcodeType::InArpReply: return ARPOP_InREPLY;
+        default: return std::nullopt;
+    }
 }
 
 } //! namespace posnet

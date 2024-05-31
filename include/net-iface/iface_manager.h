@@ -99,6 +99,8 @@ private:
     int m_socket;
 };
 
+std::optional<posnet::IFaceConfiguration> GetFirstNonLoopbackIface();
+
 } //! namespace posnet
 
 #endif //! VS_IFACE_MANAGER_H

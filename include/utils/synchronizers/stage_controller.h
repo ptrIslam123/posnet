@@ -1,5 +1,4 @@
 #ifndef VS_STAGE_CONTROLLER_H
-#define VS_STAGE_CONTROLLER_H
 
 #include <type_traits>
 #include <initializer_list>
@@ -47,9 +46,6 @@ public:
     static_assert(std::is_enum_v<T> || std::is_arithmetic_v<T>);
 
     explicit StageController(T initStage = T());
-    ~StageController() = default;
-    StageController(const StageController& other) = default;
-    StageController& operator=(const StageController& other) = default;
 
     template<typename C>
     bool gotoNextStage(C) = delete;
@@ -60,14 +56,14 @@ public:
     template<typename C>
     void setNextStageStrongly(C nextStage) = delete;
 
-    [[nodiscard]] bool gotoNextStage(T nextStage);
-    [[nodiscard]] bool  gotoNextStageIfCurrentStage(T probableCurrentStage, T nextStage);
-    [[nodiscard]] bool gotoNextStageIfCurrentStage(
+    bool [[nodiscard]] gotoNextStage(T nextStage);
+    bool [[nodiscard]] gotoNextStageIfCurrentStage(T probableCurrentStage, T nextStage);
+    bool [[nodiscard]] gotoNextStageIfCurrentStage(
         const std::initializer_list<T>& setOfPossibleValuesForCurrentStage,
         T nextStage,
         std::optional<T>& prevStage = {}
     );
-    [[nodiscard]] T getCurrentStage() const;
+    T [[nodiscard]] getCurrentStage() const;
     void setNextStageStrongly(T nextStage);
 
 private:
@@ -122,4 +118,4 @@ inline void StageController<T>::setNextStageStrongly(const T nextStage)
 
 } //! namespace posnet::utils 
 
-#endif //! VS_STAGE_CONTROLLER_H
+#endif VS_STAGE_CONTROLLER_H

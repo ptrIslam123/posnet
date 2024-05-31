@@ -1,6 +1,7 @@
 #include "frame-viewers/arp_viewer.h"
 
 #include "utils/sock_addr_convertor.h"
+#include "utils/assert.h"
 
 #include <array>
 #include <cstdio>
@@ -8,74 +9,60 @@
 #include <arpa/inet.h>
 
 namespace {
+    
+std::string_view GetHardwareAddrTypeAsStr(const posnet::ArpViewer::HardwareType hardware)
+{
+    switch (hardware) {
+        using Type = posnet::ArpViewer::HardwareType;
+        case Type::EthernetHeader: {
+            return std::string_view{"Ethernet"};
+        }
+        default: {
+            return std::string_view{"Unknown"};
+        }
+    }
+}
 
-// posnet::ArpViewer::HardwareType ExtractHardwareType(const std::uint16_t hardware)
-// {
-//     using HardwareType = posnet::ArpViewer::HardwareType;
-//     switch (hardware) {
-//         case 1: return HardwareType::ARP;
-//         case 0: return HardwareType::RARP;
-//         default:
-//             return HardwareType::Undefined;
-//     }
-// }
+std::string_view GetProtocolAddrTypeAsStr(const posnet::ArpViewer::ProtocolType protocol)
+{
+    switch (protocol) {
+        using Type = posnet::ArpViewer::ProtocolType;
+        case Type::IP: {
+            return std::string_view{"IP"};
+        }
+        default: {
+            return std::string_view{"Unknown"};
+        }
+    }
+}
 
-// posnet::ArpViewer::ProtocolType ExtractProtocolType(const std::uint16_t protocol)
-// {
-//     using ProtocolType = posnet::ArpViewer::ProtocolType;
-//     return (protocol == 0x0800 ? ProtocolType::V4 : ProtocolType::V6);
-// }
+std::string_view GetOpcodeTypeAsStr(const posnet::ArpViewer::OpcodeType opcode)
+{
+    switch (opcode) {
+        using Type = posnet::ArpViewer::OpcodeType;
+        case Type::ArpRequest: return "Arp Request";
+        case Type::ArpReply: return "Arp Reply";
+        case Type::RArpRequest: return "Revers Arp Request";
+        case Type::RArpReply: return "Revers Arp Reply";
+        case Type::InArpRequest: return "InArpRequest";
+        case Type::InArpReply: return "InArpReply";
+        default: return "Unknown";
+    }
+}
 
-// posnet::ArpViewer::OpcodeType ExtractOpcodeType(const std::uint16_t opcode)
-// {
-//     using OpcodeType = posnet::ArpViewer::OpcodeType;
-//     switch (opcode) {
-//         case 1: return OpcodeType::ArpRequest;
-//         case 2: return OpcodeType::ArpReply;
-//         case 3: return OpcodeType::RArpRequest;
-//         case 4: return OpcodeType::RArpReply;
-//         case 8: return OpcodeType::InArpRequest;
-//         case 9: return OpcodeType::InArpReply;
-//         default:
-//             return OpcodeType::Undefined;
-//     }
-// }
+} // namespace
 
-// std::string_view HardwareTypeToStr(const posnet::ArpViewer::HardwareType hardware)
-// {
-//     using HardwareType = posnet::ArpViewer::HardwareType;
-//     switch (hardware) {
-//         case HardwareType::ARP: return "ARP";
-//         case HardwareType::RARP: return "RARP";
-//         default:
-//             return "Undefined";
-//     }
-// }
-
-// std::string_view ProtocolTypeToStr(const posnet::ArpViewer::ProtocolType protocol)
-// {
-//     using ProtocolType = posnet::ArpViewer::ProtocolType;
-//     return (protocol == ProtocolType::V4 ? "V4" : "V6");
-// }
-
-// std::string_view OpcodeTypeToStr(const posnet::ArpViewer::OpcodeType opcode)
-// {
-//     using OpcodeType = posnet::ArpViewer::OpcodeType;
-//     switch (opcode) {
-//         case OpcodeType::ArpRequest: return "ArpRequest";
-//         case OpcodeType::ArpReply: return "ArpReply";
-//         case OpcodeType::RArpRequest: return "RArpRequest";
-//         case OpcodeType::RArpReply: return "RArpReply";
-//         case OpcodeType::InArpRequest: return "InArpRequest";
-//         case OpcodeType::InArpReply: return "InArpReply";
-//         default:
-//             return "Undefined";
-//     }
-// }
-
-} //! namespace
 
 namespace posnet {
+
+BadArpPackage::BadArpPackage(const std::string_view msg):
+m_msg(msg)
+{}
+
+const char* BadArpPackage::what() const noexcept
+{
+    return m_msg.data();
+}
 
 ArpViewer::ArpViewer(EthernetViewer ethernetViewer):
 BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(ethernetViewer.getStart()), ethernetViewer.getSize()),
@@ -94,157 +81,199 @@ m_frame(reinterpret_cast<HeaderStructType*>(
     const_cast<RawFrameViewType::value_type*>(rawFrame.data())))
 {}
 
-// ArpViewer::HardwareType ArpViewer::getHardwareType()
-// {
-//     return ExtractHardwareType(ntohs(m_frame->hardwareType));
-// }
+ArpViewer::HardwareType ArpViewer::getHardwareAddrType()
+{
+    const auto hwdType = ArpViewer::NativeToHardwareType(ntohs(m_frame->ar_hrd));
+    ASSERTION(hwdType, BadArpPackage, "Invalid native hardware address type")
+    return *hwdType;
+}
 
-// std::string_view ArpViewer::getHardwareTypeAsStr()
-// {
-//     return HardwareTypeToStr(getHardwareType());
-// }
+ArpViewer::ProtocolType ArpViewer::getProtocolAddrType()
+{
+    const auto protoType = ArpViewer::NativeToProtocolType(ntohs(m_frame->ar_pro));
+    ASSERTION(protoType, BadArpPackage, "Invalid native protocol address type")
+    return *protoType;
+}
 
-// ArpViewer::ProtocolType ArpViewer::getProtocolType()
-// {
-//     return ExtractProtocolType(ntohs(m_frame->protoType));
-// }
+std::string_view ArpViewer::getProtocolAddrTypeAsStr()
+{
+    return GetProtocolAddrTypeAsStr(getProtocolAddrType());
+}
 
-// std::string_view ArpViewer::getProtocolTypeAsStr()
-// {
-//     return ProtocolTypeToStr(getProtocolType());
-// }
+std::string_view ArpViewer::getHardwareAddrTypeAsStr()
+{
+    return GetHardwareAddrTypeAsStr(getHardwareAddrType());
+}
 
-// ArpViewer::OpcodeType ArpViewer::getOpcode()
-// {
-//     return ExtractOpcodeType(ntohs(m_frame->opcode));
-// }
+std::string_view ArpViewer::getOpcodeTypeAsStr()
+{
+    return GetOpcodeTypeAsStr(getOpcodeType());
+}
 
-// std::string_view ArpViewer::getOpcodeAsStr()
-// {
-//     return OpcodeTypeToStr(getOpcode());
-// }
+ArpViewer::SizeType ArpViewer::getHardwareAddrLength()
+{
+    return ntohs(m_frame->ar_hln);
+}
 
-// std::string ArpViewer::getSenderMacAddressAsStr()
-// {
-//     return posnet::utils::MacAddrToStr(m_frame->senderMac);
-// }
+ArpViewer::SizeType ArpViewer::getProtocolAddrLength()
+{
+    return ntohs(m_frame->ar_pln);
+}
 
-// std::string ArpViewer::getTargetMacAddressAsStr()
-// {
-//     return posnet::utils::MacAddrToStr(m_frame->targetMac);
-// }
+ArpViewer::OpcodeType ArpViewer::getOpcodeType()
+{
+    const auto opcode = ArpViewer::NativeToOpcodeType(ntohs(m_frame->ar_op));
+    ASSERTION(opcode, BadArpPackage, "Invalid native opcode type")
+    return *opcode;
+}
 
-// std::string ArpViewer::getSenderIpAddressAsStr()
-// {
-//     return posnet::utils::IpAddrToStr(m_frame->senderIp);
-// }
+std::string ArpViewer::getSenderMacAddressAsStr()
+{
+    auto addr = utils::MacAddrToStr(m_frame->arp_sha);
+    ASSERTION(!addr.empty(), BadArpPackage, "Bad sender mac addr format")
+    return addr;
+}
 
-// std::string ArpViewer::getTargetIpAddressAsStr()
-// {
-//     return posnet::utils::IpAddrToStr(m_frame->targetIp);
-// }
+std::string ArpViewer::getSenderIpAddressAsStr()
+{
+    auto addr = utils::IpAddrToStr(m_frame->arp_spa);
+    ASSERTION(!addr.empty(), BadArpPackage, "Bad sender ip addr format")
+    return addr;
+}
 
-// ArpViewer::HardwareType ArpViewer::getHardwareType() const
-// {
-//     return ExtractHardwareType(ntohs(m_frame->hardwareType));
-// }
+std::string ArpViewer::getTargetMacAddressAsStr()
+{
+    auto addr = utils::MacAddrToStr(m_frame->arp_tha);
+    ASSERTION(!addr.empty(), BadArpPackage, "Bad target mac addr format")
+    return addr;
+}
 
-// std::string_view ArpViewer::getHardwareTypeAsStr() const
-// {
-//     return HardwareTypeToStr(getHardwareType());
-// }
+std::string ArpViewer::getTargetIpAddressAsStr()
+{
+    auto addr = utils::IpAddrToStr(m_frame->arp_tpa);
+    ASSERTION(!addr.empty(), BadArpPackage, "Bad target ip addr format")
+    return addr;
+}
 
-// ArpViewer::ProtocolType ArpViewer::getProtocolType() const
-// {
-//     return ExtractProtocolType(ntohs(m_frame->protoType));
-// }
+ArpViewer::HardwareType ArpViewer::getHardwareAddrType() const
+{
+    const auto hwdType = ArpViewer::NativeToHardwareType(ntohs(m_frame->ar_hrd));
+    ASSERTION(hwdType, BadArpPackage, "Invalid native hardware address type")
+    return *hwdType;
+}
 
-// std::string_view ArpViewer::getProtocolTypeAsStr() const
-// {
-//     return ProtocolTypeToStr(getProtocolType());
-// }
+ArpViewer::ProtocolType ArpViewer::getProtocolAddrType() const
+{
+    const auto protoType = ArpViewer::NativeToProtocolType(ntohs(m_frame->ar_pro));
+    ASSERTION(protoType, BadArpPackage, "Invalid native protocol address type")
+    return *protoType;
+}
 
-// ArpViewer::OpcodeType ArpViewer::getOpcode() const
-// {
-//     return ExtractOpcodeType(ntohs(m_frame->opcode));
-// }
+ArpViewer::SizeType ArpViewer::getHardwareAddrLength() const
+{
+    return ntohs(m_frame->ar_hln);
+}
 
-// std::string_view ArpViewer::getOpcodeAsStr() const
-// {
-//     return OpcodeTypeToStr(getOpcode());
-// }
+ArpViewer::SizeType ArpViewer::getProtocolAddrLength() const
+{
+    return ntohs(m_frame->ar_pln);
+}
 
-// std::string ArpViewer::getSenderMacAddressAsStr() const
-// {
-//     return posnet::utils::MacAddrToStr(m_frame->senderMac);
-// }
+ArpViewer::OpcodeType ArpViewer::getOpcodeType() const
+{
+    const auto opcode = ArpViewer::NativeToOpcodeType(ntohs(m_frame->ar_op));
+    ASSERTION(opcode, BadArpPackage, "Invalid native opcode type")
+    return *opcode;
+}
 
-// std::string ArpViewer::getTargetMacAddressAsStr() const
-// {
-//     return posnet::utils::MacAddrToStr(m_frame->targetMac);
-// }
+std::string ArpViewer::getSenderMacAddressAsStr() const
+{
+    auto addr = utils::MacAddrToStr(m_frame->arp_sha);
+    ASSERTION(!addr.empty(), BadArpPackage, "Bad sender mac addr format")
+    return addr;
+}
 
-// std::string ArpViewer::getSenderIpAddressAsStr() const
-// {
-//     return posnet::utils::IpAddrToStr(m_frame->senderIp);
-// }
+std::string ArpViewer::getSenderIpAddressAsStr() const
+{
+    auto addr = utils::IpAddrToStr(m_frame->arp_spa);
+    ASSERTION(!addr.empty(), BadArpPackage, "Bad sender ip addr format")
+    return addr;
+}
 
-// std::string ArpViewer::getTargetIpAddressAsStr() const
-// {
-//     return posnet::utils::IpAddrToStr(m_frame->targetIp);
-// }
+std::string ArpViewer::getTargetMacAddressAsStr() const
+{
+    auto addr = utils::MacAddrToStr(m_frame->arp_tha);
+    ASSERTION(!addr.empty(), BadArpPackage, "Bad target mac addr format")
+    return addr;
+}
 
-// std::uint8_t* ArpViewer::getFrameHeaderStart()
-// {
-//     return reinterpret_cast<std::uint8_t*>(m_frame);
-// }
+std::string ArpViewer::getTargetIpAddressAsStr() const
+{
+    auto addr = utils::IpAddrToStr(m_frame->arp_tpa);
+    ASSERTION(!addr.empty(), BadArpPackage, "Bad target ip addr format")
+    return addr;
+}
 
-// std::ostream& ArpViewer::operator<<(std::ostream& os) const
-// {
-//      os << "ARP header {\n";
-//      os << "\thardware-type=" << getHardwareTypeAsStr() << "\n";
-//      os << "\tprotocol-type=" << getProtocolTypeAsStr() << "\n";
-//      os << "\topcode=" << getOpcodeAsStr() << "\n";
-//      os << "\tsender-ip-address=" << getSenderIpAddressAsStr() << "\n";
-//      os << "\ttarget-ip-address=" << getTargetIpAddressAsStr() << "\n";
-//      os << "\tsender-mac-address=" << getSenderMacAddressAsStr() << "\n";
-//      os << "\ttarget-mac-address=" << getSenderMacAddressAsStr() << "\n";
-//      os << "}";
-//     return os;
-// }
+std::string_view ArpViewer::getProtocolAddrTypeAsStr() const
+{
+    return GetProtocolAddrTypeAsStr(getProtocolAddrType());
+}
 
-// std::ostream& operator<<(std::ostream& os, const ArpViewer& arpViewer)
-// {
-//     return arpViewer.operator<<(os);
-// }
+std::string_view ArpViewer::getHardwareAddrTypeAsStr() const
+{
+    return GetHardwareAddrTypeAsStr(getHardwareAddrType());
+}
 
-std::optional<uint16_t> ArpViewer::HardwareTypeToNative(const HardwareType hardware)
+std::string_view ArpViewer::getOpcodeTypeAsStr() const
+{
+    return GetOpcodeTypeAsStr(getOpcodeType());
+}
+
+
+std::ostream& ArpViewer::operator<<(std::ostream& os) const
+{
+    os << "Arp header {" << "\n";
+    os << "\t sender-mac-addr=" << getSenderMacAddressAsStr() << "\n";
+    os << "\t sender-ip-addr=" << getSenderIpAddressAsStr() << "\n";
+    os << "\t target-mac-addr=" << getTargetMacAddressAsStr() << "\n";
+    os << "\t target-ip-addr=" << getTargetIpAddressAsStr() << "\n";
+    os << "}";
+    return os;
+}
+
+std::optional<ArpViewer::HardwareType> ArpViewer::NativeToHardwareType(const uint16_t hardware)
 {
     switch (hardware) {
-        case HardwareType::EthernetHeader : return ARPHRD_ETHER;
+        case ARPHRD_ETHER: return HardwareType::EthernetHeader;
         default: return std::nullopt;
     }
 }
 
-std::optional<uint16_t> ArpViewer::ProtocolTypeToNative(const ProtocolType protocol)
+std::optional<ArpViewer::ProtocolType> ArpViewer::NativeToProtocolType(const uint16_t protocol)
 {
     switch (protocol) {
-        case ProtocolType::IP: return ETHERTYPE_IP;
+        case ETHERTYPE_IP: return ProtocolType::IP;
         default: return std::nullopt;
     }
 }
 
-std::optional<uint16_t> ArpViewer::OpcodeTypeToNative(const OpcodeType opcode)
+std::optional<ArpViewer::OpcodeType> ArpViewer::NativeToOpcodeType(const uint16_t opcode)
 {
     switch (opcode) {
-        case OpcodeType::ArpRequest: return ARPOP_REQUEST;
-        case OpcodeType::ArpReply: return ARPOP_REPLY;
-        case OpcodeType::RArpRequest : return ARPOP_RREQUEST;
-        case OpcodeType::RArpReply: return ARPOP_RREPLY;
-        case OpcodeType::InArpRequest: return ARPOP_InREQUEST;
-        case OpcodeType::InArpReply: return ARPOP_InREPLY;
+        case ARPOP_REQUEST: return OpcodeType::ArpRequest;
+        case ARPOP_REPLY: return OpcodeType::ArpReply;
+        case ARPOP_RREQUEST: return OpcodeType::RArpRequest;
+        case ARPOP_RREPLY: return OpcodeType::RArpReply;
+        case ARPOP_InREQUEST: return OpcodeType::InArpRequest;
+        case ARPOP_InREPLY: return OpcodeType::InArpReply;
         default: return std::nullopt;
     }
+}
+
+
+std::ostream& operator<<(std::ostream& os, const ArpViewer& arpViewer)
+{
+    return arpViewer.operator<<(os);
 }
 
 } //! namespace posnet

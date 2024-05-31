@@ -224,6 +224,19 @@ void SetConfig(const int socket, const posnet::IFaceConfiguration& config)
 
 namespace posnet {
 
+std::optional<posnet::IFaceConfiguration> GetFirstNonLoopbackIface()
+{
+    IFaceManager ifaceManager;
+    const auto& configs = ifaceManager.getConfigs();
+    for (const auto& config : configs) {
+        if (config.getName() && *config.getName() != IFaceConfiguration::LOOP_BACK_INTERFACE_NAME) {
+            return config;
+        }
+    }
+
+    return std::nullopt;
+}
+
 IFaceManager::IFaceManager():
 m_socket(0)
 {

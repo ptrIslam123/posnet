@@ -3,22 +3,13 @@
 
 #include "include/base_frame.h"
 #include "include/frame-viewers/arp_viewer.h"
+#include "include/utils/io/sync/streambuffer/istreambuffer.h"
 
 #include <string>
 #include <string_view>
-#include <exception>
 #include <ostream>
 
 namespace posnet {
-
-class BadArpPackage final : public std::exception {
-public:
-    explicit BadArpPackage(std::string_view msg);
-    virtual const char* what() const noexcept;
-
-private:
-    std::string m_msg;
-};
 
 class ArpBuilder final : public BaseFrame {
 public:
@@ -42,6 +33,8 @@ public:
     using ProtocolType = ArpViewer::ProtocolType;
     using HardwareType = ArpViewer::HardwareType;
     using OpcodeType = ArpViewer::OpcodeType;
+    template<typename Allocator>
+    using IStreamBuffer = posnet::utils::io::IStreamBuffer<Allocator>;
 
     static constexpr auto DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES = sizeof(arphdr);
     static constexpr auto HARDWARE_LENGTH = 6;
@@ -65,6 +58,10 @@ public:
 
     std::ostream& operator<<(std::ostream& os) const;
     std::ostream& operator<<(std::ostream& os);
+   
+    static std::optional<uint16_t> HardwareTypeToNative(HardwareType hardware);
+    static std::optional<uint16_t> ProtocolTypeToNative(ProtocolType protocol);
+    static std::optional<uint16_t> OpcodeTypeToNative(OpcodeType opcode);
 
 private:
     HeaderStructType m_frame;
@@ -72,6 +69,22 @@ private:
 
 std::ostream& operator<<(std::ostream& os, const ArpBuilder& arpBuilder);
 std::ostream& operator<<(std::ostream& os, ArpBuilder& arpBuilder);
+
+template<typename Allocator>
+ArpBuilder::IStreamBuffer<Allocator>& operator<<(ArpBuilder::IStreamBuffer<Allocator>& istreamBuffer, ArpBuilder& arpBuilder)
+{
+    BaseFrame& frame = arpBuilder;
+    istreamBuffer << frame;
+    return istreamBuffer;
+}
+
+template<typename Allocator>
+ArpBuilder::IStreamBuffer<Allocator>& operator<<(ArpBuilder::IStreamBuffer<Allocator>& istreamBuffer, const ArpBuilder& arpBuilder)
+{
+    const BaseFrame& frame = arpBuilder;
+    istreamBuffer << frame;
+    return istreamBuffer;
+}
 
 } //! namespace posnet
 

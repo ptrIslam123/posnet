@@ -34,9 +34,6 @@ void SendArpRequest(
     const std::string_view targetIp
 )
 {
-    std::array<posnet::def::ByteType, 1024> buffer = {0};
-    posnet::def::SizeType bufferSize = 0;
-
     posnet::EthernetBuilder ethernetBuilder;
     posnet::ArpBuilder arpBuilder;
 
@@ -52,13 +49,13 @@ void SendArpRequest(
             .setSourceIpAddress(srcIp)
             .setTargetIpAddress(targetIp);
 
-    std::memcpy(buffer.data() + bufferSize, ethernetBuilder.getStart(), ethernetBuilder.getSize());
-    bufferSize += ethernetBuilder.getSize();
+    using namespace posnet::utils::io;
+    posnet::utils::io::IStreamBuffer istreamBuffer;
+    istreamBuffer << ethernetBuilder;
+    istreamBuffer << arpBuilder;
 
-    std::memcpy(buffer.data() + bufferSize, arpBuilder.getStart(), arpBuilder.getSize());
-    bufferSize += arpBuilder.getSize();
-
-    if(sendto(sockfd, buffer.data(), bufferSize, 0, sockAddr, sockAddrLength) <= 0) {
+    auto frameBuffer{ istreamBuffer.asSpan() };
+    if(sendto(sockfd, frameBuffer.data(), frameBuffer.size(), 0, sockAddr, sockAddrLength) <= 0) {
         std::cerr << "Could not send the arp package" << std::endl;
     } else {
         std::cout << "Sent the arp package" << std::endl;

@@ -4,12 +4,24 @@
 #include "include/base_frame.h"
 #include "include/frame-viewers/ethernet_viewer.h"
 
+#include <exception>
 #include <string>
 #include <string_view>
 #include <ostream>
 #include <optional>
+#include <cstdint>
 
 namespace posnet {
+
+class BadArpPackage final : public std::exception {
+public:
+    explicit BadArpPackage(std::string_view msg);
+    virtual const char* what() const noexcept;
+
+private:
+    std::string m_msg;
+};
+
 
 /**
  * @brief This class represents of ARP frame.
@@ -74,40 +86,43 @@ public:
     explicit ArpViewer(RawFrameViewType rawFrame);
     explicit ArpViewer(ConstRawFrameViewType rawFrame);
 
-    // HardwareType getHardwareType();
-    // std::string_view getHardwareTypeAsStr();
-    // ProtocolType getProtocolType();
-    // std::string_view getProtocolTypeAsStr();
-    // OpcodeType getOpcode();
-    // std::string_view getOpcodeAsStr();
-    // std::string getSenderMacAddressAsStr();
-    // std::string getTargetMacAddressAsStr();
-    // std::string getSenderIpAddressAsStr();
-    // std::string getTargetIpAddressAsStr();
-    // std::uint8_t* getFrameHeaderStart();
-    
-    // HardwareType getHardwareType() const;
-    // std::string_view getHardwareTypeAsStr() const;
-    // ProtocolType getProtocolType() const;
-    // std::string_view getProtocolTypeAsStr() const;
-    // OpcodeType getOpcode() const;
-    // std::string_view getOpcodeAsStr() const;
-    // std::string getSenderMacAddressAsStr() const;
-    // std::string getTargetMacAddressAsStr() const;
-    // std::string getSenderIpAddressAsStr() const;
-    // std::string getTargetIpAddressAsStr() const;
+    HardwareType getHardwareAddrType();
+    ProtocolType getProtocolAddrType();
+    SizeType getHardwareAddrLength();
+    SizeType getProtocolAddrLength();
+    OpcodeType getOpcodeType();
+    std::string getSenderMacAddressAsStr();
+    std::string getSenderIpAddressAsStr();
+    std::string getTargetMacAddressAsStr();
+    std::string getTargetIpAddressAsStr();
+    std::string_view getHardwareAddrTypeAsStr();
+    std::string_view getProtocolAddrTypeAsStr();
+    std::string_view getOpcodeTypeAsStr();
 
-    //std::ostream& operator<<(std::ostream& os) const;
+    HardwareType getHardwareAddrType() const;
+    ProtocolType getProtocolAddrType() const;
+    SizeType getHardwareAddrLength() const;
+    SizeType getProtocolAddrLength() const;
+    OpcodeType getOpcodeType() const;
+    std::string getSenderMacAddressAsStr() const;
+    std::string getSenderIpAddressAsStr() const;
+    std::string getTargetMacAddressAsStr() const;
+    std::string getTargetIpAddressAsStr() const;
+    std::string_view getHardwareAddrTypeAsStr() const;
+    std::string_view getProtocolAddrTypeAsStr() const;
+    std::string_view getOpcodeTypeAsStr() const;
 
-    static std::optional<uint16_t> HardwareTypeToNative(HardwareType hardware);
-    static std::optional<uint16_t> ProtocolTypeToNative(ProtocolType protocol);
-    static std::optional<uint16_t> OpcodeTypeToNative(OpcodeType opcode);
+    std::ostream& operator<<(std::ostream& os) const;
+
+    static std::optional<HardwareType> NativeToHardwareType(const uint16_t hardware);
+    static std::optional<ProtocolType> NativeToProtocolType(const uint16_t protocol);
+    static std::optional<OpcodeType> NativeToOpcodeType(const uint16_t opcode);
 
 private:
     HeaderStructType* m_frame;
 };
 
-//std::ostream& operator<<(std::ostream& os, const ArpViewer& arpViewer);
+std::ostream& operator<<(std::ostream& os, const ArpViewer& arpViewer);
 
 } //! namespace posnet
 

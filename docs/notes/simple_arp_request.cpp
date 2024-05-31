@@ -14,7 +14,7 @@
 #define SRC_IP_ADDR "10.110.15.84"
 #define SRC_MAC_ADDR "58:11:22:06:96:bc"
 #define DST_IP_ADDR "10.110.15.157"
-#define DST_MAC_ADDR "4:42:1a:2d:33:ad"`
+#define DST_MAC_ADDR "4:42:1a:2d:33:ad"
 
 #define ETH_ALEN 6
 #define INLEN 4

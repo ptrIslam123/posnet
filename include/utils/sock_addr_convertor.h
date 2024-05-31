@@ -28,7 +28,9 @@ std::optional<std::array<uint8_t, MAC_ADDRESS_LENGTH_IN_BYTES>> StrToMacAddr(std
 std::optional<std::array<std::uint8_t, IP_ADDRESS_LENGTH_IN_BYTES>> StrToIpAddrArray(std::string_view ipAddrStr); 
 std::optional<uint32_t> StrToIpAddr(std::string_view ipAddrStr);
 std::optional<uint32_t> CountSetBitsInIpAddr(std::string_view ipAddrStr);
-std::set<std::string> GenerateIpAddrRange(std::string_view startIpAddr, std::string_view endIpAddr);
+
+std::string DomainNameToIpAddr(std::string_view name);
+std::string IpAddrToDomainName(std::string_view ipAddr);
 
 } //! namespace posnet::utils
 
