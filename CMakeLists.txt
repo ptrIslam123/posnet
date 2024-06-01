@@ -118,6 +118,8 @@ if(BUILD_EXAMPLES)
     target_builder("l2_icmp_client" "examples/l2_icmp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
 
     target_builder("l2_arp_request" "examples/l2_arp_request.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
+
+    target_builder("http_server" "examples/http_server.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
 endif()
 
 #******************************************************* Build tools dir *******************************************************#
