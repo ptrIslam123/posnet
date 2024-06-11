@@ -9,7 +9,7 @@
     {                                           \
         if (!static_cast<bool>(expr)) {                    \
             std::stringstream ss;   \
-            ss << __FILE__ ":" << __LINE__ << ": " msg;  \
+            ss << __FILE__ ":" << __LINE__ << ": " << msg;  \
             throw except_type(ss.str());                \
         }                               \
     }

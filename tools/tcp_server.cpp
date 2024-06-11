@@ -61,13 +61,13 @@ void HandleClientRead(const int sockfd)
     const auto readBytes = recvfrom(sockfd, buffer.data(), buffer.size(), 0, (struct sockaddr*)&clientSockAddr, &clientSockAddrLength);
     if (readBytes > 0) {
         const std::string_view clientData{ buffer.data(), static_cast<std::string_view::size_type>(readBytes) };
-        std::cout << "SERVER: from=" << posnet::utils::IpAddrToStr(clientSockAddr.sin_addr.s_addr)
+        std::cout << "SERVER: from=" << posnet::utils::v4::IpAddrToStr(clientSockAddr.sin_addr.s_addr)
             << ", data=" << clientData << std::endl;
         ioPoll.onWriteEvent(sockfd,  [clientData](const int sockfd) {
             HandleClintWrite(sockfd, clientData);
         });
     } else if (readBytes == 0) {
-        std::cout << "SERVER: closed client: " << posnet::utils::IpAddrToStr(clientSockAddr.sin_addr.s_addr) << std::endl;
+        std::cout << "SERVER: closed client: " << posnet::utils::v4::IpAddrToStr(clientSockAddr.sin_addr.s_addr) << std::endl;
         ioPoll.removeCallback(sockfd, PollType::IOEventType::Read);
     } else {
         std::cerr << "SERVER: read error " << strerror(errno) << std::endl;
@@ -86,7 +86,7 @@ void AcceptClient(const int serverSockfd)
         std::cerr << "SERVER: accept failed";
     } else {
         std::cout << "SERVER: accepted a new client: "
-                << "(ip=" <<  posnet::utils::IpAddrToStr(clientSockAddr.sin_addr.s_addr) << " : "
+                << "(ip=" <<  posnet::utils::v4::IpAddrToStr(clientSockAddr.sin_addr.s_addr) << " : "
                 << "port=" << clientSockAddr.sin_port << ")" << std::endl;
 
         ioPoll.onReadEvent(clientfd, HandleClientRead);
@@ -112,7 +112,7 @@ int main(int argc, char** argv)
     {
         const auto ifaceConfig = posnet::GetFirstNonLoopbackIface();
         if (ifaceConfig && ifaceConfig->getIpAddress()) {
-            const auto addr = posnet::utils::StrToIpAddr(*ifaceConfig->getIpAddress());
+            const auto addr = posnet::utils::v4::StrToIpAddr(*ifaceConfig->getIpAddress());
             if (addr) {
                 hostIpAddr = *addr;
             }
@@ -120,8 +120,6 @@ int main(int argc, char** argv)
     }
 
     int sockfd;
-    struct sockaddr_in serverSockAddr;
-
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         std::cerr << "SERVER: could not open server socket" << std::endl;
         return EXIT_FAILURE;
@@ -141,6 +139,7 @@ int main(int argc, char** argv)
     }
 
     // Set up the server address structure
+    struct sockaddr_in serverSockAddr;
     std::memset(&serverSockAddr, 0, sizeof(serverSockAddr));
     serverSockAddr.sin_family = AF_INET;
     serverSockAddr.sin_addr.s_addr = (hostIpAddr ? *hostIpAddr : INADDR_ANY);
@@ -158,7 +157,7 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    std::cout << "SERVER: started tcp server(pid=" << getpid() << ") (" << (hostIpAddr ? posnet::utils::IpAddrToStr(*hostIpAddr) : "127.0.0.1") << " : " << std::to_string(port) << ")" << std::endl;
+    std::cout << "SERVER: started tcp server(pid=" << getpid() << ") (" << (hostIpAddr ? posnet::utils::v4::IpAddrToStr(*hostIpAddr) : "127.0.0.1") << " : " << std::to_string(port) << ")" << std::endl;
     ioPoll.onReadEvent(sockfd, AcceptClient);
     ioPoll.start();
     return EXIT_SUCCESS;

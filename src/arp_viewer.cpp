@@ -136,7 +136,7 @@ std::string ArpViewer::getSenderMacAddressAsStr()
 
 std::string ArpViewer::getSenderIpAddressAsStr()
 {
-    auto addr = utils::IpAddrToStr(m_frame->arp_spa);
+    auto addr = utils::v4::IpAddrToStr(m_frame->arp_spa);
     ASSERTION(!addr.empty(), BadArpPackage, "Bad sender ip addr format")
     return addr;
 }
@@ -150,7 +150,7 @@ std::string ArpViewer::getTargetMacAddressAsStr()
 
 std::string ArpViewer::getTargetIpAddressAsStr()
 {
-    auto addr = utils::IpAddrToStr(m_frame->arp_tpa);
+    auto addr = utils::v4::IpAddrToStr(m_frame->arp_tpa);
     ASSERTION(!addr.empty(), BadArpPackage, "Bad target ip addr format")
     return addr;
 }
@@ -195,7 +195,7 @@ std::string ArpViewer::getSenderMacAddressAsStr() const
 
 std::string ArpViewer::getSenderIpAddressAsStr() const
 {
-    auto addr = utils::IpAddrToStr(m_frame->arp_spa);
+    auto addr = utils::v4::IpAddrToStr(m_frame->arp_spa);
     ASSERTION(!addr.empty(), BadArpPackage, "Bad sender ip addr format")
     return addr;
 }
@@ -209,7 +209,7 @@ std::string ArpViewer::getTargetMacAddressAsStr() const
 
 std::string ArpViewer::getTargetIpAddressAsStr() const
 {
-    auto addr = utils::IpAddrToStr(m_frame->arp_tpa);
+    auto addr = utils::v4::IpAddrToStr(m_frame->arp_tpa);
     ASSERTION(!addr.empty(), BadArpPackage, "Bad target ip addr format")
     return addr;
 }

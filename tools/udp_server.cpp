@@ -66,7 +66,7 @@ void HandleAccept(const int serverfd) {
     const auto readBytes = recvfrom(serverfd, buffer.data(), buffer.size(), 0, (struct sockaddr*)&clientSockAddr, &clientSockAddrLength);
     if (readBytes > 0) {
         const std::string_view clientData{ buffer.data(), static_cast<std::string_view::size_type>(readBytes) };
-        std::cout << "SERVER: from=" << posnet::utils::IpAddrToStr(clientSockAddr.sin_addr.s_addr)
+        std::cout << "SERVER: from=" << posnet::utils::v4::IpAddrToStr(clientSockAddr.sin_addr.s_addr)
             << ", data=" << clientData << std::endl;
         ioPoll.onWriteEvent(serverfd, [clientData, &clientSockAddr, &clientSockAddrLength](const int sockfd) mutable {
             HandleWrite(sockfd, clientData, (struct sockaddr*)&clientSockAddr, clientSockAddrLength);
@@ -105,7 +105,7 @@ int main(int argc, char** argv) {
     {
         const auto ifaceConfig = posnet::GetFirstNonLoopbackIface();
         if (ifaceConfig && ifaceConfig->getIpAddress()) {
-            const auto addr = posnet::utils::StrToIpAddr(*ifaceConfig->getIpAddress());
+            const auto addr = posnet::utils::v4::StrToIpAddr(*ifaceConfig->getIpAddress());
             if (addr) {
                 hostIpAddr = *addr;
             }
@@ -116,15 +116,15 @@ int main(int argc, char** argv) {
     std::memset(&sockAddr, 0, sizeof(sockAddr));
     sockAddr.sin_family = AF_INET;
     sockAddr.sin_port = htons(port);
-    sockAddr.sin_addr.s_addr = htons(port);
+    sockAddr.sin_addr.s_addr = hostIpAddr ?  *hostIpAddr : htons(INADDR_ANY);
 
     // Bind the socket to the server address
     if (bind(serverfd, (struct sockaddr *)&sockAddr, sizeof(sockAddr)) < 0) {
-        std::cerr << "SERVER: bind error" << std::endl;
+        std::cerr << "SERVER: bind error: " << strerror(errno) << std::endl;
         return EXIT_FAILURE;
     }
 
-    std::cout << "SERVER: started udp server(pid=" << getpid() << ") (" << (hostIpAddr ? posnet::utils::IpAddrToStr(*hostIpAddr) : LOCAL_HOST_ADDR) << " : " << std::to_string(port) << ")" << std::endl;
+    std::cout << "SERVER: started udp server(pid=" << getpid() << ") (" << (hostIpAddr ? posnet::utils::v4::IpAddrToStr(*hostIpAddr) : LOCAL_HOST_ADDR) << " : " << std::to_string(port) << ")" << std::endl;
     ioPoll.onReadEvent(serverfd, HandleAccept);
     ioPoll.start();
     return EXIT_SUCCESS;

@@ -4,6 +4,7 @@
 #include "include/utils/assert.h"
 
 #include <sstream>
+#include <iomanip>
 
 namespace
 {
@@ -12,6 +13,17 @@ namespace
 
 
 namespace posnet::utils {
+
+void DumpToHexFormat(std::ostream& os, std::span<std::uint8_t> data)
+{
+    std::ios_base::fmtflags f(os.flags());
+    os << std::hex << std::setfill('0');
+    for (size_t i = 0; i < data.size(); ++i) {
+        os << std::setw(2) << static_cast<unsigned>(data[i]) << " ";
+    }
+    os << std::endl;
+    os.flags(f);
+}
 
 std::vector<std::string> SplitString(const std::string& str, char delimiter)
 {
@@ -26,7 +38,7 @@ std::vector<std::string> SplitString(const std::string& str, char delimiter)
 
 std::set<std::string> GenerateIpAddrRange(const std::string_view ipAddr, int cidr)
 {
-    auto intIp = StrToIpAddr(ipAddr);
+    auto intIp = v4::StrToIpAddr(ipAddr);
     ASSERTION(intIp, std::runtime_error, "Invalid ip addr string format")
 
     uint32_t mask = ~((1 << (32 - cidr)) - 1);
@@ -35,7 +47,7 @@ std::set<std::string> GenerateIpAddrRange(const std::string_view ipAddr, int cid
 
     std::set<std::string> range;
     for (uint32_t i = network + 1; i < broadcast; ++i) {
-        range.insert(IpAddrToStr(i));
+        range.insert(v4::IpAddrToStr(i));
     }
 
     return range;
@@ -44,8 +56,8 @@ std::set<std::string> GenerateIpAddrRange(const std::string_view ipAddr, int cid
 std::set<std::string> GenerateIpAddrRange(const std::string_view startIpAddr, const std::string_view endIpAddr)
 {
     std::set<std::string> ipList;
-    const auto startAddr = posnet::utils::StrToIpAddrArray(startIpAddr);
-    const auto endAddr = posnet::utils::StrToIpAddrArray(endIpAddr);
+    const auto startAddr = posnet::utils::v4::StrToIpAddrArray(startIpAddr);
+    const auto endAddr = posnet::utils::v4::StrToIpAddrArray(endIpAddr);
     if (!startAddr || !endAddr) {
         return {};
     }
@@ -58,7 +70,7 @@ std::set<std::string> GenerateIpAddrRange(const std::string_view startIpAddr, co
             auto address = *startAddr;
             for (auto j = start; j <= end || j <= 254; ++j) {
                 address[i] = j;
-                auto addressSr = posnet::utils::IpAddrToStr(address);
+                auto addressSr = posnet::utils::v4::IpAddrToStr(address);
                 if (!addressSr.empty()) {
                     ipList.insert(std::move(addressSr));
                 }

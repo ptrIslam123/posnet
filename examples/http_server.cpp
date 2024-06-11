@@ -56,7 +56,7 @@ void HandleClientRequest(const int clientfd) {
 
     std::array<char, 1024> buffer = {0};
     const auto readBytes = recvfrom(clientfd, buffer.data(), buffer.size(), 0, (struct sockaddr*)&clientSockAddr, &clientSockAddrLength);
-    const auto clientAddr = posnet::utils::IpAddrToStr(clientSockAddr.sin_addr.s_addr);
+    const auto clientAddr = posnet::utils::v4::IpAddrToStr(clientSockAddr.sin_addr.s_addr);
     if (readBytes > 0) {
         buffer[readBytes] = '\0';
         ProcessHttpRequest(clientfd, clientAddr, std::string_view{ buffer.data(), static_cast<std::string_view::size_type>(readBytes) });
@@ -79,7 +79,7 @@ void HandleAccept(const int serverfd) {
         std::cerr << "SERVER: accept failed";
     } else {
         std::cout << "SERVER: accepted a new client: "
-                << "(ip=" <<  posnet::utils::IpAddrToStr(clientSockAddr.sin_addr.s_addr) << " : "
+                << "(ip=" <<  posnet::utils::v4::IpAddrToStr(clientSockAddr.sin_addr.s_addr) << " : "
                 << "port=" << clientSockAddr.sin_port << ")" << std::endl;
 
         ioPoll.onReadEvent(clientfd, HandleClientRequest);
@@ -105,7 +105,7 @@ int main(int argc, char** argv)
     {
         const auto ifaceConfig = posnet::GetFirstNonLoopbackIface();
         if (ifaceConfig && ifaceConfig->getIpAddress()) {
-            const auto addr = posnet::utils::StrToIpAddr(*ifaceConfig->getIpAddress());
+            const auto addr = posnet::utils::v4::StrToIpAddr(*ifaceConfig->getIpAddress());
             if (addr) {
                 hostIpAddr = *addr;
             }
@@ -150,7 +150,7 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    std::cout << "SERVER: started tcp server(pid=" << getpid() << ") (" << (hostIpAddr ? posnet::utils::IpAddrToStr(*hostIpAddr) : "127.0.0.1") << " : " << std::to_string(port) << ")" << std::endl;
+    std::cout << "SERVER: started tcp server(pid=" << getpid() << ") (" << (hostIpAddr ? posnet::utils::v4::IpAddrToStr(*hostIpAddr) : "127.0.0.1") << " : " << std::to_string(port) << ")" << std::endl;
     ioPoll.onReadEvent(serverfd, HandleAccept);
     ioPoll.start();
     return 0;

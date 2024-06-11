@@ -1,0 +1,1 @@
+cmd_/home/islam/cpp/net/posnet/kernel-modules/firewall/package-filter/Module.symvers :=  sed 's/ko$$/o/'  /home/islam/cpp/net/posnet/kernel-modules/firewall/package-filter/modules.order | scripts/mod/modpost -m     -o /home/islam/cpp/net/posnet/kernel-modules/firewall/package-filter/Module.symvers -e -i Module.symvers -T - 

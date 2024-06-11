@@ -43,7 +43,9 @@ public:
     */
     template<typename T>
     IStreamBuffer& operator<<(const T& object);
+    SizeType writeBytes(ConstBufferViewType buffer);
     ConstBufferViewType asSpan();
+    BufferType asBuffer();
 
 private:
     SizeType m_wroteBytesToBuffer;
@@ -69,9 +71,23 @@ IStreamBuffer<Allocator>& IStreamBuffer<Allocator>::operator<<(const T& object)
 }
 
 template<typename Allocator>
+typename IStreamBuffer<Allocator>::SizeType IStreamBuffer<Allocator>::writeBytes(const ConstBufferViewType buffer)
+{
+    m_buffer.insert(m_buffer.end(), buffer.begin(), buffer.end());
+    m_wroteBytesToBuffer += buffer.size();
+    return buffer.size();
+}
+
+template<typename Allocator>
 typename IStreamBuffer<Allocator>::ConstBufferViewType IStreamBuffer<Allocator>::asSpan()
 {
     return BufferViewType{ m_buffer.data(), m_wroteBytesToBuffer };
+}
+
+template<typename Allocator>
+typename IStreamBuffer<Allocator>::BufferType IStreamBuffer<Allocator>::asBuffer()
+{
+    return m_buffer;
 }
 
 } //! namespace posnet::utils::io

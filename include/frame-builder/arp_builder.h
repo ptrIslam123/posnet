@@ -40,7 +40,7 @@ public:
     static constexpr auto HARDWARE_LENGTH = 6;
     static constexpr auto PROTOCOL_LENGTH = 4;
     static constexpr auto DEFAULT_HARDWARE_ADDR_TYPE_LENGTH = def::MAC_ADDRESS_LENGTH_IN_BYTES;
-    static constexpr auto DEFAULT_PROTOCOL_ADDR_TYPE_LENGTH = def::IP_ADDRESS_LENGTH_IN_BYTES;
+    static constexpr auto DEFAULT_PROTOCOL_ADDR_TYPE_LENGTH = def::IPV4_ADDRESS_LENGTH_IN_BYTES;
     static constexpr auto DEFAULT_HARDWARE_ADDR_TYPE = HardwareType::EthernetHeader;
     static constexpr auto DEFAULT_PROTOCOL_ADDR_TYPE = ProtocolType::IP;
 
@@ -56,7 +56,6 @@ public:
     ArpBuilder& seTargetMacAddress(std::string_view macAddr) &;
     ArpBuilder& setTargetIpAddress(std::string_view ipAddr) &;
 
-    std::ostream& operator<<(std::ostream& os) const;
     std::ostream& operator<<(std::ostream& os);
    
     static std::optional<uint16_t> HardwareTypeToNative(HardwareType hardware);
@@ -67,21 +66,12 @@ private:
     HeaderStructType m_frame;
 };
 
-std::ostream& operator<<(std::ostream& os, const ArpBuilder& arpBuilder);
 std::ostream& operator<<(std::ostream& os, ArpBuilder& arpBuilder);
 
 template<typename Allocator>
 ArpBuilder::IStreamBuffer<Allocator>& operator<<(ArpBuilder::IStreamBuffer<Allocator>& istreamBuffer, ArpBuilder& arpBuilder)
 {
     BaseFrame& frame = arpBuilder;
-    istreamBuffer << frame;
-    return istreamBuffer;
-}
-
-template<typename Allocator>
-ArpBuilder::IStreamBuffer<Allocator>& operator<<(ArpBuilder::IStreamBuffer<Allocator>& istreamBuffer, const ArpBuilder& arpBuilder)
-{
-    const BaseFrame& frame = arpBuilder;
     istreamBuffer << frame;
     return istreamBuffer;
 }

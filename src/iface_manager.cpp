@@ -416,7 +416,7 @@ std::optional<unsigned int> IFaceConfiguration::getNetMaskAddressLength()
 {
     const auto netMaskAddr = getNetMaskAddress();
     if (netMaskAddr) {
-        return CountSetBitsInIpAddr(*netMaskAddr);
+        return v4::CountSetBitsInIpAddr(*netMaskAddr);
     } else {
         return std::nullopt;
     }
@@ -466,7 +466,7 @@ std::optional<unsigned int> IFaceConfiguration::getNetMaskAddressLength() const
 {
     const auto netMaskAddr = getNetMaskAddress();
     if (netMaskAddr) {
-        return CountSetBitsInIpAddr(*netMaskAddr);
+        return v4::CountSetBitsInIpAddr(*netMaskAddr);
     } else {
         return std::nullopt;
     }

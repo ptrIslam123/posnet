@@ -22,6 +22,8 @@ void HostBufferViewToNetwork(std::span<std::uint8_t> buffer);
 std::set<std::string> GenerateIpAddrRange(std::string_view startIpAddr, std::string_view endIpAddr);
 std::set<std::string> GenerateIpAddrRange(std::string_view ipAddr, int cidr/*subnet mask length*/);
 
+void DumpToHexFormat(std::ostream& os, std::span<std::uint8_t> data);
+
 } //! namespace posnet::utils
 
 #endif //! VS_ALGORITHMS_H
