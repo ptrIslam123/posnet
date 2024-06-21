@@ -51,6 +51,8 @@ include/frame-builder/icmp_builder.h
 include/frame-builder/arp_builder.h
 include/frame-builder/dns_builder.h
 
+include/frame-filter/frame_filter.h
+
 include/utils/io/async/poll/poll.h
 include/utils/io/sync/streambuffer/istreambuffer.h
 include/utils/io/sync/streambuffer/ostreambuffer.h
@@ -90,6 +92,7 @@ src/poll.cpp
 src/args_parser.cpp
 src/dns_builder.cpp
 src/dns_viewer.cpp
+src/frame_filter.cpp
 )
 
 message(STATUS "LIB_INSTALL_DIR=${CMAKE_BINARY_DIR}/lib")
@@ -113,7 +116,7 @@ set_target_properties(${LIB_NAME} PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
 if(BUILD_EXAMPLES)
     message(STATUS "BUILD_EXAMPLES=ON")
 
-    #target_builder("frame_shiffer" "examples/frame_sniffer.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
+    target_builder("frame_shiffer" "examples/frame_sniffer.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
     
     target_builder("l3-udp-client" "examples/l3_udp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
     target_builder("l2-udp-client" "examples/l2_udp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")

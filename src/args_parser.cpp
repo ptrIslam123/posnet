@@ -215,4 +215,45 @@ template<> std::optional<std::vector<bool>> Parser::getArgValue(const std::strin
     return std::nullopt;
 }
 
+template<> std::optional<std::unordered_set<std::string>> Parser::getArgValue(const std::string_view argName, const char delimiter)
+{
+    const auto args = getArgValue<std::vector<std::string>>(argName, delimiter);
+    if (args.has_value()) {
+        return std::unordered_set<std::string>{ args->begin(), args->end() };
+    } else {
+        return std::nullopt;
+    }
+}
+
+template<> std::optional<std::unordered_set<int>> Parser::getArgValue(const std::string_view argName, const char delimiter)
+{
+    const auto args = getArgValue<std::vector<int>>(argName, delimiter);
+    if (args.has_value()) {
+        return std::unordered_set<int>{ args->begin(), args->end() };
+    } else {
+        return std::nullopt;
+    }
+}
+
+template<> std::optional<std::unordered_set<double>> Parser::getArgValue(const std::string_view argName, const char delimiter)
+{
+    const auto args = getArgValue<std::vector<double>>(argName, delimiter);
+    if (args.has_value()) {
+        return std::unordered_set<double>{ args->begin(), args->end() };
+    } else {
+        return std::nullopt;
+    }
+}
+
+template<> std::optional<std::unordered_set<bool>> Parser::getArgValue(const std::string_view argName, const char delimiter)
+{
+    const auto args = getArgValue<std::vector<bool>>(argName, delimiter);
+    if (args.has_value()) {
+        return std::unordered_set<bool>{ args->begin(), args->end() };
+    } else {
+        return std::nullopt;
+    }
+}
+
+
 } // namespace posnet::utils::args

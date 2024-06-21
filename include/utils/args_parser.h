@@ -5,6 +5,7 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+#include <unordered_set>
 #include <optional>
 #include <initializer_list>
 #include <span>
@@ -40,6 +41,11 @@ template<> std::optional<std::vector<std::string>> Parser::getArgValue(std::stri
 template<> std::optional<std::vector<int>> Parser::getArgValue(std::string_view argName, char delimiter);
 template<> std::optional<std::vector<double>> Parser::getArgValue(std::string_view argName, char delimiter);
 template<> std::optional<std::vector<bool>> Parser::getArgValue(std::string_view argName, char delimiter);
+
+template<> std::optional<std::unordered_set<std::string>> Parser::getArgValue(std::string_view argName, char delimiter);
+template<> std::optional<std::unordered_set<int>> Parser::getArgValue(std::string_view argName, char delimiter);
+template<> std::optional<std::unordered_set<double>> Parser::getArgValue(std::string_view argName, char delimiter);
+template<> std::optional<std::unordered_set<bool>> Parser::getArgValue(std::string_view argName, char delimiter);
 
 } // namespace posnet::utils
 

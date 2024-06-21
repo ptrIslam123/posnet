@@ -28,14 +28,35 @@ m_frame(reinterpret_cast<HeaderStructType*>(
     const_cast<RawFrameViewType::value_type*>(rawFrame.data())))
 {}
 
+
+std::span<std::uint8_t, def::MAC_ADDRESS_LENGTH_IN_BYTES> EthernetViewer::getDestMacAddress()
+{
+    return m_frame->h_dest;
+}
+
+std::span<std::uint8_t, def::MAC_ADDRESS_LENGTH_IN_BYTES> EthernetViewer::getSourceMacAddress()
+{
+    return m_frame->h_source;
+}
+
+std::span<std::uint8_t, def::MAC_ADDRESS_LENGTH_IN_BYTES> EthernetViewer::getDestMacAddress() const
+{
+    return m_frame->h_dest;
+}
+
+std::span<std::uint8_t, def::MAC_ADDRESS_LENGTH_IN_BYTES> EthernetViewer::getSourceMacAddress() const
+{
+    return m_frame->h_source;
+}
+
 std::string EthernetViewer::getDestMacAddressAsStr()
 {
-    return posnet::utils::MacAddrToStr(m_frame->h_dest);
+    return posnet::utils::MacAddrToStr(getDestMacAddress());
 }
 
 std::string EthernetViewer::getSourceMacAddressAsStr()
 {
-    return posnet::utils::MacAddrToStr(m_frame->h_source);
+    return posnet::utils::MacAddrToStr(getSourceMacAddress());
 }
 
 EthernetViewer::ProtocolType EthernetViewer::getProtocol()
@@ -57,12 +78,12 @@ std::string_view EthernetViewer::getProtocolAsStr()
 
 std::string EthernetViewer::getDestMacAddressAsStr() const
 {
-    return posnet::utils::MacAddrToStr(m_frame->h_dest);
+    return posnet::utils::MacAddrToStr(getDestMacAddress());
 }
 
 std::string EthernetViewer::getSourceMacAddressAsStr() const
 {
-    return posnet::utils::MacAddrToStr(m_frame->h_source);
+    return posnet::utils::MacAddrToStr(getSourceMacAddress());
 }
 
 EthernetViewer::ProtocolType EthernetViewer::getProtocol() const

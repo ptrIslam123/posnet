@@ -21,13 +21,53 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 
-namespace posnet::utils {
-    
-std::string MacAddrToStr(std::span<uint8_t, MAC_ADDRESS_LENGTH_IN_BYTES> macAddr)
+namespace {
+
+std::optional<std::string> ValidateMacAddr(std::string_view macAddr)
 {
-    auto addrStruct = reinterpret_cast<struct ether_addr*>(macAddr.data());
-    return ether_ntoa(addrStruct);
+    std::array<char, 32> addrStorage = {0};
+    auto i = 0;
+    do {
+        const auto pos = macAddr.find(":");
+        if (pos != std::string_view::npos) {
+            const std::string_view actet = macAddr.substr(0, pos);
+            if (actet.size() == 2) {
+                std::memcpy(addrStorage.data() + i, actet.data(), actet.size());
+                i += actet.size();
+
+                addrStorage[i] = ':';
+                i += 1;
+
+            } else if (actet.size() == 1) {
+                char zero = '0';
+                std::memcpy(addrStorage.data() + i, &zero, sizeof(zero));
+                i += sizeof(zero);
+
+                std::memcpy(addrStorage.data() + i, actet.data(), actet.size());
+                i += 1;
+
+                addrStorage[i] = ':';
+                i += 1;
+            } else {
+                return {};
+            }
+            macAddr = macAddr.substr(pos + 1);
+        } else {
+            std::memcpy(addrStorage.data() + i, macAddr.data(), macAddr.size());
+            i += macAddr.size();
+            break;
+        }
+    } while (true);
+
+    return (i == macAddr.size() ?
+                std::nullopt :
+                std::make_optional(std::string{ addrStorage.data() })
+    );
 }
+
+} //! namespace
+
+namespace posnet::utils {
 
 namespace v4 {
 
@@ -117,12 +157,26 @@ std::string IpAddrToStr(const struct sockaddr_in6& ipAddr)
 
 } //! namespace v6
 
+std::string MacAddrToStr(std::span<uint8_t, MAC_ADDRESS_LENGTH_IN_BYTES> macAddr)
+{
+    std::array<char, 2 * 6 + 1 * 5> addrStorage = {0};
+    auto addrStruct = reinterpret_cast<struct ether_addr*>(macAddr.data());
+    const std::string_view addr{ ether_ntoa(addrStruct) };
+    const auto res = ValidateMacAddr(addr);
+    return (res.has_value() ? *res : std::string{ addr });
+}
+
 std::string MacAddrToStr(const struct sockaddr& macAddr)
 {
     const auto addr = ether_ntoa(reinterpret_cast<const struct ether_addr*>(&macAddr.sa_data));
-    return (addr != nullptr ? std::string(addr) : std::string());
+    if (addr) {
+        const std::string addrStr{ addr };
+        const auto res = ValidateMacAddr(addrStr);
+        return res.has_value() ? *res : std::string{ addrStr };
+    } else {
+        return {};
+    }
 }
-
 
 std::optional<std::array<uint8_t, MAC_ADDRESS_LENGTH_IN_BYTES>> StrToMacAddr(const std::string_view macAddrStr)
 {

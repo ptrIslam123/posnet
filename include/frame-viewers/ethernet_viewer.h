@@ -6,6 +6,7 @@
 #include <string>
 #include <string_view>
 #include <ostream>
+#include <array>
 
 #include <netinet/ether.h>
 
@@ -31,6 +32,7 @@ public:
     using RawFrameViewType = BaseFrame::RawFrameViewType; 
     using ConstRawFrameViewType = BaseFrame::ConstRawFrameViewType;
     using HeaderStructType = struct ethhdr;
+    using AddressType = std::array<std::uint8_t, def::MAC_ADDRESS_LENGTH_IN_BYTES>;
 
     enum class ProtocolType {
         IP,
@@ -40,6 +42,12 @@ public:
     };
 
     explicit EthernetViewer(ConstRawFrameViewType rawFrame);
+
+    std::span<std::uint8_t, def::MAC_ADDRESS_LENGTH_IN_BYTES> getDestMacAddress();
+    std::span<std::uint8_t, def::MAC_ADDRESS_LENGTH_IN_BYTES> getSourceMacAddress();
+
+    std::span<std::uint8_t, def::MAC_ADDRESS_LENGTH_IN_BYTES> getDestMacAddress() const;
+    std::span<std::uint8_t, def::MAC_ADDRESS_LENGTH_IN_BYTES> getSourceMacAddress() const;
 
     std::string getDestMacAddressAsStr();
     std::string getSourceMacAddressAsStr();
