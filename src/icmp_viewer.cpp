@@ -188,7 +188,7 @@ namespace posnet {
 IcmpViewer::IcmpViewer(IpViewer ipViewer):
 BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(ipViewer.getStart()), ipViewer.getSize()),
 m_frame(reinterpret_cast<HeaderStructType*>(
-    ipViewer.getFrameHeaderStart() + ipViewer.getHeaderLengthInBytes()))
+    const_cast<BaseFrame::ByteType*>(ipViewer.getHeaderStart() + ipViewer.getHeaderLengthInBytes())))
 {}
 
 IcmpViewer::IcmpViewer(const ConstRawFrameViewType rawFrame):

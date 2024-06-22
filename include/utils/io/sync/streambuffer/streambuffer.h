@@ -51,24 +51,6 @@ struct StreamConverter {
     }
 };
 
-template<typename Allocator>
-struct StreamConverter<Allocator, BaseFrame> {
-    static SizeType Write(BufferType<Allocator>& buffer, const SizeType offset, const BaseFrame& data)
-    {
-        auto frame = data.getAsRawFrameView();
-        buffer.resize(offset + frame.size());
-        auto ptr = buffer.data() + offset;
-        std::memcpy(ptr, frame.data(), frame.size());
-        return frame.size();
-    }
-
-    static SizeType Read(const ConstBufferViewType buffer, const SizeType offset, BaseFrame& data)
-    {
-        ASSERTION(false, std::runtime_error, "TODO: Not yet impl!")
-        return 0;
-    }
-};
-
 template<typename Allocator, typename T>
 struct StreamConverter<Allocator, std::span<T>> {
     static SizeType Write(BufferType<Allocator>& buffer, const SizeType offset, const std::span<T>& data)

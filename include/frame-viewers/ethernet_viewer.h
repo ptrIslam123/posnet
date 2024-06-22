@@ -53,11 +53,13 @@ public:
     std::string getSourceMacAddressAsStr();
     ProtocolType getProtocol();
     std::string_view getProtocolAsStr();
+    const BaseFrame::ByteType* getHeaderStart();
 
     std::string getDestMacAddressAsStr() const;
     std::string getSourceMacAddressAsStr() const;
     ProtocolType getProtocol() const;
     std::string_view getProtocolAsStr() const;
+    const BaseFrame::ByteType* getHeaderStart() const;
 
     std::ostream& operator<<(std::ostream& os) const;
 

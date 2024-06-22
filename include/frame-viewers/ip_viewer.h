@@ -85,6 +85,7 @@ public:
     unsigned int getCheckSum();
     std::string getSourceIpAddressAsStr();
     std::string getDestIpAddressAsStr();
+    const BaseFrame::ByteType* getHeaderStart();
   
     VersionType getVersion() const;
     ProtocolType getProtocol() const;
@@ -99,8 +100,7 @@ public:
     unsigned int getCheckSum() const;
     std::string getSourceIpAddressAsStr() const;
     std::string getDestIpAddressAsStr() const;
-    
-    std::uint8_t* getFrameHeaderStart();
+    const BaseFrame::ByteType* getHeaderStart() const;
 
     std::ostream& operator<<(std::ostream& os) const;
     

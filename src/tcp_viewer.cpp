@@ -13,11 +13,13 @@ constexpr unsigned char FlagsSet = 0x00;
 namespace posnet {
     
 TcpViewer::TcpViewer(IpViewer ipViewer):
+BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(ipViewer.getStart()), ipViewer.getSize()),
 m_frame(reinterpret_cast<HeaderStructType*>(
-    ipViewer.getFrameHeaderStart() + ipViewer.getHeaderLengthInBytes()))
+    const_cast<BaseFrame::ByteType*>(ipViewer.getHeaderStart() + ipViewer.getHeaderLengthInBytes())))
 {}
 
 TcpViewer::TcpViewer(RawFrameViewType rawFrame):
+BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(rawFrame.data()), rawFrame.size()),
 m_frame(nullptr)
 {
     const auto ethernetHeaderLength = EthernetViewer::DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES;
@@ -30,6 +32,7 @@ m_frame(nullptr)
 }
 
 TcpViewer::TcpViewer(ConstRawFrameViewType rawFrame):
+BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(rawFrame.data()), rawFrame.size()),
 m_frame(nullptr)
 {
     const auto ethernetHeaderLength = EthernetViewer::DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES;
@@ -38,7 +41,7 @@ m_frame(nullptr)
         rawFrame.size() - ethernetHeaderLength 
     }).getHeaderLengthInBytes();
     
-    m_frame = reinterpret_cast<HeaderStructType*>(const_cast<RawFrameViewType::value_type*>(rawFrame.data() + ethernetHeaderLength + ipHeaderLength));
+    m_frame = reinterpret_cast<HeaderStructType*>(const_cast<BaseFrame::ByteType*>(rawFrame.data() + ethernetHeaderLength + ipHeaderLength));
 }
 
 TcpViewer::PortType TcpViewer::getSourcePort()
@@ -171,9 +174,28 @@ bool TcpViewer::getFinishFlag() const
     return static_cast<bool>(m_frame->fin & FlagsSet);
 }
 
-std::uint8_t* TcpViewer::getFrameHeaderStart()
+TcpViewer::ConstRawFrameViewType TcpViewer::getPayload()
 {
-    return reinterpret_cast<std::uint8_t*>(m_frame);
+    const auto payloadStart = reinterpret_cast<const BaseFrame::ByteType*>(getHeaderStart() + getHeaderLengthInBytes());
+    const ConstRawFrameViewType::size_type payloadSize = getSize() - (payloadStart - getStart()); 
+    return ConstRawFrameViewType{ payloadStart, payloadSize };
+}
+
+TcpViewer::ConstRawFrameViewType TcpViewer::getPayload() const
+{
+    const auto payloadStart = reinterpret_cast<const BaseFrame::ByteType*>(getHeaderStart() + getHeaderLengthInBytes());
+    const ConstRawFrameViewType::size_type payloadSize = getSize() - (payloadStart - getStart()); 
+    return ConstRawFrameViewType{ payloadStart, payloadSize };
+}
+
+const TcpViewer::BaseFrame::ByteType* TcpViewer::getHeaderStart()
+{
+    return reinterpret_cast<const BaseFrame::ByteType*>(m_frame);
+}
+
+const TcpViewer::BaseFrame::ByteType* TcpViewer::getHeaderStart() const
+{
+    return reinterpret_cast<const BaseFrame::ByteType*>(m_frame);
 }
 
 std::ostream& TcpViewer::operator<<(std::ostream& os) const

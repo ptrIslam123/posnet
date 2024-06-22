@@ -16,6 +16,11 @@ namespace posnet::utils {
 
 void DumpToHexFormat(std::ostream& os, std::span<std::uint8_t> data)
 {
+    DumpToHexFormat(os, std::span<const std::uint8_t>(data));
+}
+
+void DumpToHexFormat(std::ostream& os, const std::span<const std::uint8_t> data)
+{
     std::ios_base::fmtflags f(os.flags());
     os << std::hex << std::setfill('0');
     for (size_t i = 0; i < data.size(); ++i) {

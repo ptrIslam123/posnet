@@ -44,7 +44,7 @@ namespace posnet {
  * 
  * urg_ptr: This field is only used if the urgent pointer (URG) flag is set.
  */  
-class TcpViewer final {
+class TcpViewer final : public BaseFrame {
 public:
     using RawFrameViewType = IpViewer::RawFrameViewType;
     using ConstRawFrameViewType = IpViewer::ConstRawFrameViewType;
@@ -68,7 +68,8 @@ public:
     bool getResetFlag();
     bool getSynchronizeFlag();
     bool getFinishFlag();
-    std::uint8_t* getFrameHeaderStart();
+    ConstRawFrameViewType getPayload();
+    const BaseFrame::ByteType* getHeaderStart();
 
     PortType getSourcePort() const;
     PortType getDestPort() const;
@@ -83,11 +84,14 @@ public:
     bool getResetFlag() const;
     bool getSynchronizeFlag() const;
     bool getFinishFlag() const;
+    ConstRawFrameViewType getPayload() const;
+    const BaseFrame::ByteType* getHeaderStart() const;
 
     std::ostream& operator<<(std::ostream& os) const;
 
 private:
     HeaderStructType* m_frame;
+    def::SizeType m_size;
 };
 
 std::ostream& operator<<(std::ostream& os, const TcpViewer& tcpViewer);

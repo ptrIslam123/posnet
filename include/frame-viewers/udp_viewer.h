@@ -38,13 +38,16 @@ public:
     PortType getDestPort();
     unsigned int getUdpDataGramLength();
     unsigned int getCheckSum();
+    ConstRawFrameViewType getPayload();
+    const BaseFrame::ByteType* getHeaderStart();
 
     PortType getSourcePort() const;
     PortType getDestPort() const;
     unsigned int getUdpDataGramLength() const;
     unsigned int getCheckSum() const;
+    ConstRawFrameViewType getPayload() const;
 
-    std::uint8_t* getFrameHeaderStart();
+    const BaseFrame::ByteType* getHeaderStart() const;
 
     std::ostream& operator<<(std::ostream& os) const;
 

@@ -13,7 +13,6 @@
 #include <unistd.h>
 
 #include "include/net-iface/iface_manager.h"
-#include "include/utils/system_error.h"
 
 #include "include/frame-viewers/ethernet_viewer.h"
 #include "include/frame-viewers/ip_viewer.h"
@@ -21,10 +20,10 @@
 #include "include/frame-viewers/tcp_viewer.h"
 #include "include/frame-viewers/icmp_viewer.h"
 #include "include/frame-viewers/arp_viewer.h"
-#include "include/frame-viewers/dns_viewer.h"
 
 #include "include/frame-filter/frame_filter.h"
 
+#include "include/utils/algorithms.h"
 #include "include/utils/scoped_lock.h"
 #include "include/utils/args_parser.h"
 #include "include/utils/assert.h"
@@ -32,9 +31,9 @@
 using ConstRawFrameViewType = posnet::EthernetViewer::ConstRawFrameViewType;
 using RawFrameViewType = posnet::EthernetViewer::RawFrameViewType;
 
-const auto ANY_PORTS = std::unordered_set<int>{};
-const auto ANY_ADDRS = std::unordered_set<std::string>{};
-const auto ANY_PROTOCOLS = std::unordered_set<std::string>{};
+const auto ANY_PORTS = std::unordered_set<int>{0};
+const auto ANY_ADDRS = std::unordered_set<std::string>{"any"};
+const auto ANY_PROTOCOLS = std::unordered_set<std::string>{"any"};
 
 void Usage(const std::string_view appName)
 {
@@ -57,7 +56,7 @@ void Usage(const std::string_view appName)
     std::cout << ss.str() << std::endl;
 }
 
-void ParseCapturedFrameOnL3(
+bool ParseCapturedFrameOnL3(
     const posnet::IpViewer& ipViewer, 
     const posnet::FrameFilter& filter, 
     std::stringstream& ss
@@ -68,8 +67,20 @@ void ParseCapturedFrameOnL3(
             const posnet::TcpViewer tcpViewer{ ipViewer };
             if (!filter.filter(tcpViewer)) {
                 ss << tcpViewer << std::endl;
+                const auto payload = tcpViewer.getPayload();
+                {
+                    ss << "TCP-PAYLOAD(ASCI)=\"";
+                    ss << std::string_view{ (char*)(payload.data()), payload.size() }
+                    << "\"" << "\n";
+                }
+
+                {
+                    ss << "TCP-PAYLOAD(HEX)=\"";
+                    posnet::utils::DumpToHexFormat(ss, payload);
+                    ss << "\"" << "\n";
+                }
             } else {
-                ss.clear();
+                return false;
             }
             break;
         }
@@ -77,8 +88,20 @@ void ParseCapturedFrameOnL3(
             const posnet::UdpViewer udpViewer{ ipViewer };
             if (!filter.filter(udpViewer)) {
                 ss << udpViewer << std::endl;
+                const auto payload = udpViewer.getPayload();
+                {
+                    ss << "UDP-PAYLOAD(ASCI)=\"";
+                    ss << std::string_view{ (char*)(payload.data()), payload.size() }
+                    << "\"" << "\n";
+                }
+
+                {
+                    ss << "UDP-PAYLOAD(HEX)=\"";
+                    posnet::utils::DumpToHexFormat(ss, payload);
+                    ss << "\"" << "\n";
+                }
             } else {
-                ss.clear();
+                return false;
             }
             break;
         }
@@ -87,17 +110,19 @@ void ParseCapturedFrameOnL3(
             if (!filter.filter(icmpViewer)) {
                 ss << icmpViewer << std::endl;
             } else {
-                ss.clear();
+                return false;
             }
             break;
         }
         default: {
-            ss.clear();
+            return false;
         }
     }
+
+    return true;
 }
 
-void ParseCapturedFrameOnL3(
+bool ParseCapturedFrameOnL3(
     const posnet::ArpViewer& arpViewer, 
     const posnet::FrameFilter& filter, 
     std::stringstream& ss
@@ -105,11 +130,13 @@ void ParseCapturedFrameOnL3(
     if (!filter.filter(arpViewer)) {
         ss << arpViewer << std::endl;
     } else {
-        ss.clear();
+        return false;
     }
+
+    return true;
 }
 
-void ParseCapturedFrameOnL2(
+bool ParseCapturedFrameOnL2(
     const posnet::EthernetViewer& ethernetViewer, 
     const posnet::FrameFilter& filter, 
     std::stringstream& ss
@@ -120,30 +147,27 @@ void ParseCapturedFrameOnL2(
             const posnet::IpViewer ipViewer{ ethernetViewer };
             if (!filter.filter(ipViewer)) {
                 ss << ipViewer << std::endl;
-                ParseCapturedFrameOnL3(ipViewer, filter, ss);
+                return ParseCapturedFrameOnL3(ipViewer, filter, ss);
             } else {
-                ss.clear();
+                return false;
             }
-            break;
         }
         case ProtocolType::ARP: {
             const posnet::ArpViewer arpViewer{ ethernetViewer };
             if (!filter.filter(arpViewer)) {
                 ss << arpViewer << std::endl;
-                ParseCapturedFrameOnL3(arpViewer, filter, ss);
+                return ParseCapturedFrameOnL3(arpViewer, filter, ss);
             } else {
-                ss.clear();
+                return false;
             }
-            break;
         }
         default: {
-            ss.clear();
-            break;
+            return false;
         }
     }
 }
 
-void ParseCapturedFrameOnL1(
+bool ParseCapturedFrameOnL1(
     const ConstRawFrameViewType rawFrameBuffer, 
     const posnet::FrameFilter& filter, 
     std::stringstream& ss
@@ -151,18 +175,18 @@ void ParseCapturedFrameOnL1(
     const posnet::EthernetViewer ethernetViewer{ rawFrameBuffer };
     if (!filter.filter(ethernetViewer)) {
         ss << ethernetViewer << std::endl;
-        ParseCapturedFrameOnL2(ethernetViewer, filter, ss);
+        return ParseCapturedFrameOnL2(ethernetViewer, filter, ss);
     } else {
-        ss.clear();
+        return false;
     }
 }
 
-void ParseCapturedFrame(
+bool ParseCapturedFrame(
     const ConstRawFrameViewType rawFrameBuffer, 
     const posnet::FrameFilter& filters, 
     std::stringstream& ss
 ) {
-    ParseCapturedFrameOnL1(rawFrameBuffer, filters, ss);
+    return ParseCapturedFrameOnL1(rawFrameBuffer, filters, ss);
 }
 
 posnet::FrameFilter GetFilter(posnet::utils::args::Parser&& parser)
@@ -254,7 +278,6 @@ int main(int argc, char** argv) {
         struct sockaddr sockaddr;
         std::memset(&sockaddr, 0, sizeof(sockaddr));
         socklen_t sockaddrSize = sizeof(sockaddr);
-        std::stringstream ss;
 
         while (true) {
             const std::size_t bufferSize = recvfrom(sockfd, buffer.data(), buffer.size(), 0, &sockaddr, &sockaddrSize);
@@ -263,9 +286,10 @@ int main(int argc, char** argv) {
                 return EXIT_FAILURE;
             }
 
-            ParseCapturedFrame(ConstRawFrameViewType{ buffer.data(), bufferSize}, filter, ss);
-            std::cout << ss.str();
-            ss.clear();
+            std::stringstream ss;
+            if (ParseCapturedFrame(ConstRawFrameViewType{ buffer.data(), bufferSize}, filter, ss)) {
+                std::cout << ss.str() << std::endl;
+            }
         }
 
         return EXIT_SUCCESS;

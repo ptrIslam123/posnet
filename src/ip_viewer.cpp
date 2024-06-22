@@ -31,14 +31,14 @@ m_frame(reinterpret_cast<HeaderStructType*>(
 {}
 
 IpViewer::IpViewer(const RawFrameViewType rawFrame):
-BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(rawFrame.data()), DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES),
-m_frame(reinterpret_cast<HeaderStructType*>(rawFrame.data()))
+BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(rawFrame.data()), rawFrame.size()),
+m_frame(reinterpret_cast<HeaderStructType*>(rawFrame.data() + EthernetViewer::DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES))
 {}
 
 IpViewer::IpViewer(const ConstRawFrameViewType rawFrame):
-BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(rawFrame.data()), DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES),
+BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(rawFrame.data()), rawFrame.size()),
 m_frame(reinterpret_cast<HeaderStructType*>(
-    const_cast<RawFrameViewType::value_type*>(rawFrame.data())))
+    const_cast<BaseFrame::ByteType*>(rawFrame.data() + EthernetViewer::DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES)))
 {}
 
 IpViewer::VersionType IpViewer::getVersion()
@@ -173,9 +173,14 @@ std::string IpViewer::getDestIpAddressAsStr() const
     return posnet::utils::v4::IpAddrToStr(m_frame->daddr);
 }
 
-std::uint8_t* IpViewer::getFrameHeaderStart()
+const IpViewer::BaseFrame::ByteType* IpViewer::getHeaderStart()
 {
-    return reinterpret_cast<std::uint8_t*>(m_frame);
+    return reinterpret_cast<const BaseFrame::ByteType*>(m_frame);
+}
+
+const IpViewer::BaseFrame::ByteType* IpViewer::getHeaderStart() const
+{
+    return reinterpret_cast<const BaseFrame::ByteType*>(m_frame);
 }
 
 std::ostream& IpViewer::operator<<(std::ostream& os) const

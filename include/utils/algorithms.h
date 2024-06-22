@@ -23,6 +23,7 @@ std::set<std::string> GenerateIpAddrRange(std::string_view startIpAddr, std::str
 std::set<std::string> GenerateIpAddrRange(std::string_view ipAddr, int cidr/*subnet mask length*/);
 
 void DumpToHexFormat(std::ostream& os, std::span<std::uint8_t> data);
+void DumpToHexFormat(std::ostream& os, std::span<const std::uint8_t> data);
 
 } //! namespace posnet::utils
 

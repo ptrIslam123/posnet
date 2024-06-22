@@ -23,11 +23,10 @@ std::string_view ProtocolToStr(const posnet::EthernetViewer::ProtocolType protoc
 namespace posnet {
 
 EthernetViewer::EthernetViewer(const ConstRawFrameViewType rawFrame):
-BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(rawFrame.data()), DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES),
+BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(rawFrame.data()), rawFrame.size()),
 m_frame(reinterpret_cast<HeaderStructType*>(
-    const_cast<RawFrameViewType::value_type*>(rawFrame.data())))
+    const_cast<BaseFrame::ByteType*>(rawFrame.data())))
 {}
-
 
 std::span<std::uint8_t, def::MAC_ADDRESS_LENGTH_IN_BYTES> EthernetViewer::getDestMacAddress()
 {
@@ -100,6 +99,16 @@ EthernetViewer::ProtocolType EthernetViewer::getProtocol() const
 std::string_view EthernetViewer::getProtocolAsStr() const
 {
     return ProtocolToStr(getProtocol());
+}
+
+const BaseFrame::ByteType* EthernetViewer::getHeaderStart()
+{
+    return reinterpret_cast<const BaseFrame::ByteType*>(m_frame);
+}
+
+const BaseFrame::ByteType* EthernetViewer::getHeaderStart() const
+{
+    return reinterpret_cast<const BaseFrame::ByteType*>(m_frame);
 }
 
 std::ostream& EthernetViewer::operator<<(std::ostream& os) const

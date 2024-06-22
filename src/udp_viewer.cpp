@@ -9,7 +9,7 @@ namespace posnet {
 UdpViewer::UdpViewer(IpViewer ipViewer):
 BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(ipViewer.getStart()), ipViewer.getSize()),
 m_frame(reinterpret_cast<HeaderStructType*>(
-    ipViewer.getFrameHeaderStart() + ipViewer.getHeaderLengthInBytes()))
+    const_cast<BaseFrame::ByteType*>(ipViewer.getHeaderStart() + ipViewer.getHeaderLengthInBytes())))
 {}
 
 UdpViewer::UdpViewer(const RawFrameViewType rawFrame):
@@ -63,9 +63,28 @@ unsigned int UdpViewer::getCheckSum() const
     return ntohs(m_frame->check);
 }
 
-std::uint8_t* UdpViewer::getFrameHeaderStart()
+UdpViewer::ConstRawFrameViewType UdpViewer::getPayload()
 {
-    return reinterpret_cast<std::uint8_t*>(m_frame);
+    const auto payloadStart = reinterpret_cast<const BaseFrame::ByteType*>(getHeaderStart() + DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES);
+    const ConstRawFrameViewType::size_type payloadSize = getSize() - (payloadStart - getStart());
+    return ConstRawFrameViewType{ payloadStart, payloadSize };
+}
+
+UdpViewer::ConstRawFrameViewType UdpViewer::getPayload() const
+{
+    const auto payloadStart = reinterpret_cast<const BaseFrame::ByteType*>(getHeaderStart() + DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES);
+    const ConstRawFrameViewType::size_type payloadSize = getSize() - (payloadStart - getStart());
+    return ConstRawFrameViewType{ payloadStart, payloadSize };
+}
+
+const UdpViewer::BaseFrame::ByteType* UdpViewer::getHeaderStart()
+{
+    return reinterpret_cast<BaseFrame::ByteType*>(m_frame);
+}
+
+const UdpViewer::BaseFrame::ByteType* UdpViewer::getHeaderStart() const
+{
+    return reinterpret_cast<BaseFrame::ByteType*>(m_frame);
 }
 
 std::ostream& UdpViewer::operator<<(std::ostream& os) const

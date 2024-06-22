@@ -118,28 +118,28 @@ if(BUILD_EXAMPLES)
 
     target_builder("frame_shiffer" "examples/frame_sniffer.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
     
-    target_builder("l3-udp-client" "examples/l3_udp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
-    target_builder("l2-udp-client" "examples/l2_udp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
+    # target_builder("l3-udp-client" "examples/l3_udp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
+    # target_builder("l2-udp-client" "examples/l2_udp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
     
-    target_builder("l3-icmp-client" "examples/l3_icmp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
-    target_builder("l2-icmp-client" "examples/l2_icmp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
+    # target_builder("l3-icmp-client" "examples/l3_icmp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
+    # target_builder("l2-icmp-client" "examples/l2_icmp_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
 
-    target_builder("l2-arp-request" "examples/l2_arp_request.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
+    # target_builder("l2-arp-request" "examples/l2_arp_request.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
 
-    target_builder("http-server" "examples/http_server.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
+    # target_builder("http-server" "examples/http_server.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
 
-    target_builder("dns-client" "examples/dns_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
-    target_builder("dns-server" "examples/dns_server.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
+    # target_builder("dns-client" "examples/dns_client.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
+    # target_builder("dns-server" "examples/dns_server.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
 
-    target_builder("mdns-question" "examples/mdns_question.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
+    # target_builder("mdns-question" "examples/mdns_question.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "examples")
 endif()
 
 #******************************************************* Build tools dir *******************************************************#
 if(BUILD_TOOLS)
     message(STATUS "BUILD_TOOLS=ON")
 
-    target_builder("udp-server" "tools/udp_server.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "tools")
-    target_builder("icmp-scanner" "tools/icmp_scanner.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "tools")
-    target_builder("arp-scanner" "tools/arp_scanner.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "tools")
-    target_builder("tcp-server" "tools/tcp_server.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "tools")
+    # target_builder("udp-server" "tools/udp_server.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "tools")
+    # target_builder("icmp-scanner" "tools/icmp_scanner.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "tools")
+    # target_builder("arp-scanner" "tools/arp_scanner.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "tools")
+    # target_builder("tcp-server" "tools/tcp_server.cpp" "" "posnet" "${CMAKE_BINARY_DIR}/lib" "tools")
 endif()
