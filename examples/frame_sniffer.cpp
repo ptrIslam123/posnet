@@ -1,5 +1,7 @@
 #include <iostream>
 #include <ostream>
+#include <fstream>
+#include <filesystem>
 #include <span>
 #include <array>
 #include <unordered_set>
@@ -9,9 +11,8 @@
 #include <cstring>
 #include <cassert>
 
-#include <sys/socket.h>
-#include <unistd.h>
-
+#include "include/frame-filter/frame_filter.h"
+#include "include/frame-capturer/frame_capturer.h"
 #include "include/net-iface/iface_manager.h"
 
 #include "include/frame-viewers/ethernet_viewer.h"
@@ -21,19 +22,12 @@
 #include "include/frame-viewers/icmp_viewer.h"
 #include "include/frame-viewers/arp_viewer.h"
 
-#include "include/frame-filter/frame_filter.h"
-
-#include "include/utils/algorithms.h"
 #include "include/utils/scoped_lock.h"
 #include "include/utils/args_parser.h"
 #include "include/utils/assert.h"
 
 using ConstRawFrameViewType = posnet::EthernetViewer::ConstRawFrameViewType;
 using RawFrameViewType = posnet::EthernetViewer::RawFrameViewType;
-
-const auto ANY_PORTS = std::unordered_set<int>{0};
-const auto ANY_ADDRS = std::unordered_set<std::string>{"any"};
-const auto ANY_PROTOCOLS = std::unordered_set<std::string>{"any"};
 
 void Usage(const std::string_view appName)
 {
@@ -42,6 +36,8 @@ void Usage(const std::string_view appName)
     ss << "\t" << appName << " [options]" << "\n";
     ss << "Options:" << "\n";
     ss << "\t" << "--help                                                     = Print help info/usage" << "\n";
+    ss << "\t" << "--debug                                                    = Print debug information" << "\n";
+    ss << "\t" << "--out-file=file-path                                       = Set up a file for output information" << "\n";
     ss << "\t" << "--port=num1, num2, ... | 0(any)                            = Filter a package with source and destination port number" << "\n";
     ss << "\t" << "--port-src=num1, num2, ... | 0(any)                        = Filter a package with source port number" << "\n";
     ss << "\t" << "--port-dst=num1, num2, ... | 0(any)                        = Filter a package with destination port number" << "\n";
@@ -52,141 +48,12 @@ void Usage(const std::string_view appName)
     ss << "\t" << "--eth-src-addr=addr1, addr2, ... | any                     = Filter a package with source hardware address" << "\n";
     ss << "\t" << "--eth-dst-addr=addr1, addr2, ... | any                     = Filter a package with destination hardware address" << "\n";
     ss << "\t" << "--protocols=protocol1, protocol2, ... | any                = Filter a package with protocol" << "\n";
-    ss << "\t" << "         supported protocols list=tcp, udp" << "\n";
+    ss << "\t" << "         supported protocols list=| ";
+    for (const auto proto : posnet::FrameFilter::GetSupportedProtocols()) {
+        ss << proto << " | ";
+    }
+    ss << std::endl;
     std::cout << ss.str() << std::endl;
-}
-
-bool ParseCapturedFrameOnL3(
-    const posnet::IpViewer& ipViewer, 
-    const posnet::FrameFilter& filter, 
-    std::stringstream& ss
-) {
-    switch (ipViewer.getProtocol()) {
-        using ProtocolType = posnet::IpViewer::ProtocolType;
-        case ProtocolType::TCP: {
-            const posnet::TcpViewer tcpViewer{ ipViewer };
-            if (!filter.filter(tcpViewer)) {
-                ss << tcpViewer << std::endl;
-                const auto payload = tcpViewer.getPayload();
-                {
-                    ss << "TCP-PAYLOAD(ASCI)=\"";
-                    ss << std::string_view{ (char*)(payload.data()), payload.size() }
-                    << "\"" << "\n";
-                }
-
-                {
-                    ss << "TCP-PAYLOAD(HEX)=\"";
-                    posnet::utils::DumpToHexFormat(ss, payload);
-                    ss << "\"" << "\n";
-                }
-            } else {
-                return false;
-            }
-            break;
-        }
-        case ProtocolType::UDP: {
-            const posnet::UdpViewer udpViewer{ ipViewer };
-            if (!filter.filter(udpViewer)) {
-                ss << udpViewer << std::endl;
-                const auto payload = udpViewer.getPayload();
-                {
-                    ss << "UDP-PAYLOAD(ASCI)=\"";
-                    ss << std::string_view{ (char*)(payload.data()), payload.size() }
-                    << "\"" << "\n";
-                }
-
-                {
-                    ss << "UDP-PAYLOAD(HEX)=\"";
-                    posnet::utils::DumpToHexFormat(ss, payload);
-                    ss << "\"" << "\n";
-                }
-            } else {
-                return false;
-            }
-            break;
-        }
-        case ProtocolType::ICMP: {
-            const posnet::IcmpViewer icmpViewer{ ipViewer };
-            if (!filter.filter(icmpViewer)) {
-                ss << icmpViewer << std::endl;
-            } else {
-                return false;
-            }
-            break;
-        }
-        default: {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-bool ParseCapturedFrameOnL3(
-    const posnet::ArpViewer& arpViewer, 
-    const posnet::FrameFilter& filter, 
-    std::stringstream& ss
-) {
-    if (!filter.filter(arpViewer)) {
-        ss << arpViewer << std::endl;
-    } else {
-        return false;
-    }
-
-    return true;
-}
-
-bool ParseCapturedFrameOnL2(
-    const posnet::EthernetViewer& ethernetViewer, 
-    const posnet::FrameFilter& filter, 
-    std::stringstream& ss
-) {
-    switch (ethernetViewer.getProtocol()) {
-        using ProtocolType = posnet::EthernetViewer::ProtocolType; 
-        case ProtocolType::IP: {
-            const posnet::IpViewer ipViewer{ ethernetViewer };
-            if (!filter.filter(ipViewer)) {
-                ss << ipViewer << std::endl;
-                return ParseCapturedFrameOnL3(ipViewer, filter, ss);
-            } else {
-                return false;
-            }
-        }
-        case ProtocolType::ARP: {
-            const posnet::ArpViewer arpViewer{ ethernetViewer };
-            if (!filter.filter(arpViewer)) {
-                ss << arpViewer << std::endl;
-                return ParseCapturedFrameOnL3(arpViewer, filter, ss);
-            } else {
-                return false;
-            }
-        }
-        default: {
-            return false;
-        }
-    }
-}
-
-bool ParseCapturedFrameOnL1(
-    const ConstRawFrameViewType rawFrameBuffer, 
-    const posnet::FrameFilter& filter, 
-    std::stringstream& ss
-) {
-    const posnet::EthernetViewer ethernetViewer{ rawFrameBuffer };
-    if (!filter.filter(ethernetViewer)) {
-        ss << ethernetViewer << std::endl;
-        return ParseCapturedFrameOnL2(ethernetViewer, filter, ss);
-    } else {
-        return false;
-    }
-}
-
-bool ParseCapturedFrame(
-    const ConstRawFrameViewType rawFrameBuffer, 
-    const posnet::FrameFilter& filters, 
-    std::stringstream& ss
-) {
-    return ParseCapturedFrameOnL1(rawFrameBuffer, filters, ss);
 }
 
 posnet::FrameFilter GetFilter(posnet::utils::args::Parser&& parser)
@@ -194,52 +61,209 @@ posnet::FrameFilter GetFilter(posnet::utils::args::Parser&& parser)
     posnet::FrameFilter filter;
     // Parse transport port
     {
-        auto portData = parser.getArgValue<std::unordered_set<int>>("--port", ',').value_or(ANY_PORTS);
-        filter.srcPort.insert(portData.begin(), portData.end());
-        filter.dstPort.insert(portData.begin(), portData.end());
+        auto portData = parser.getArgValue<std::unordered_set<int>>("--port", ',');
+        if (portData.has_value()) {
+            filter.srcPort.insert(portData->begin(), portData->end());
+            filter.dstPort.insert(portData->begin(), portData->end());
+        }
 
-        portData = parser.getArgValue<std::unordered_set<int>>("--port-src", ',').value_or(ANY_PORTS);
-        filter.srcPort.insert(portData.begin(), portData.end());
+        portData = parser.getArgValue<std::unordered_set<int>>("--port-src", ',');
+        if (portData.has_value()) {
+            filter.srcPort.insert(portData->begin(), portData->end());
+        }
 
-        portData = parser.getArgValue<std::unordered_set<int>>("--port-dst", ',').value_or(ANY_PORTS);
-        filter.dstPort.insert(portData.begin(), portData.end());
+
+        portData = parser.getArgValue<std::unordered_set<int>>("--port-dst", ',');
+        if (portData.has_value()) {
+            filter.dstPort.insert(portData->begin(), portData->end());
+        }
+
+        if (filter.srcPort.empty()) {
+            filter.srcPort.insert(posnet::FrameFilter::ANY_PORT);
+        }
+
+        if (filter.dstPort.empty()) {
+            filter.dstPort.insert(posnet::FrameFilter::ANY_PORT);
+        }
     }
 
     // Parse ip addr
     {
-        auto ipAddrData = parser.getArgValue<std::unordered_set<std::string>>("--ip-addr", ',').value_or(ANY_ADDRS);
-        filter.srcIpAddr.insert(ipAddrData.begin(), ipAddrData.end());
-        filter.dstIpAddr.insert(ipAddrData.begin(), ipAddrData.end());
+        auto ipAddrData = parser.getArgValue<std::unordered_set<std::string>>("--ip-addr", ',');
+        if (ipAddrData.has_value()) {
+            filter.srcIpAddr.insert(ipAddrData->begin(), ipAddrData->end());
+            filter.dstIpAddr.insert(ipAddrData->begin(), ipAddrData->end());
+        }
 
+        ipAddrData = parser.getArgValue<std::unordered_set<std::string>>("--ip-src-addr", ',');
+        if (ipAddrData.has_value()) {
+            filter.srcIpAddr.insert(ipAddrData->begin(), ipAddrData->end());
+        }
 
-        ipAddrData = parser.getArgValue<std::unordered_set<std::string>>("--ip-src-addr", ',').value_or(ANY_ADDRS);
-        filter.srcIpAddr.insert(ipAddrData.begin(), ipAddrData.end());
+        ipAddrData = parser.getArgValue<std::unordered_set<std::string>>("--ip-dst-addr", ',');
+        if (ipAddrData.has_value()) {
+            filter.srcIpAddr.insert(ipAddrData->begin(), ipAddrData->end());
+        }
 
-        ipAddrData = parser.getArgValue<std::unordered_set<std::string>>("--ip-dst-addr", ',').value_or(ANY_ADDRS);
-        filter.dstIpAddr.insert(ipAddrData.begin(), ipAddrData.end());
+        if (filter.srcIpAddr.empty()) {
+            filter.srcIpAddr.insert(std::string{ posnet::FrameFilter::ANY_IP_ADDR });
+        }
+
+        if (filter.dstIpAddr.empty()) {
+            filter.dstIpAddr.insert(std::string{ posnet::FrameFilter::ANY_IP_ADDR });
+        }
     }
 
     // Parse eth addr
     {
-        auto ethAddrData = parser.getArgValue<std::unordered_set<std::string>>("--eth-addr", ',').value_or(ANY_ADDRS);
-        filter.srcHrwAddr.insert(ethAddrData.begin(), ethAddrData.end());
-        filter.dstHrwAddr.insert(ethAddrData.begin(), ethAddrData.end());
+        auto ethAddrData = parser.getArgValue<std::unordered_set<std::string>>("--eth-addr", ',');
+        if (ethAddrData.has_value()) {
+            filter.srcHrwAddr.insert(ethAddrData->begin(), ethAddrData->end());
+            filter.dstHrwAddr.insert(ethAddrData->begin(), ethAddrData->end());
+        }
 
-        ethAddrData = parser.getArgValue<std::unordered_set<std::string>>("--eth-src-addr", ',').value_or(ANY_ADDRS);
-        filter.srcHrwAddr.insert(ethAddrData.begin(), ethAddrData.end());
+        ethAddrData = parser.getArgValue<std::unordered_set<std::string>>("--eth-src-addr", ',');
+        if (ethAddrData.has_value()) {
+            filter.srcHrwAddr.insert(ethAddrData->begin(), ethAddrData->end());
+        }
+        
 
-        ethAddrData = parser.getArgValue<std::unordered_set<std::string>>("--eth-dst-addr", ',').value_or(ANY_ADDRS);
-        filter.dstHrwAddr.insert(ethAddrData.begin(), ethAddrData.end());
+        ethAddrData = parser.getArgValue<std::unordered_set<std::string>>("--eth-dst-addr", ',');
+        if (ethAddrData.has_value()) {
+            filter.dstHrwAddr.insert(ethAddrData->begin(), ethAddrData->end());
+        }
+
+        if (filter.srcHrwAddr.empty()) {
+            filter.srcHrwAddr.insert(std::string{ posnet::FrameFilter::ANY_ETH_ADDR });
+        }
+
+        if (filter.dstHrwAddr.empty()) {
+            filter.dstHrwAddr.insert(std::string{ posnet::FrameFilter::ANY_ETH_ADDR });
+        }
     }
 
-    filter.protocols = parser.getArgValue<std::unordered_set<std::string>>("--protocols", ',').value_or(ANY_PROTOCOLS);
+    // Parse protocols
+    {
+        auto protocols = parser.getArgValue<std::unordered_set<std::string>>("--protocols", ',');
+        if (protocols.has_value()) {
+            filter.protocols = *protocols;
+        } else {
+            const auto anyProtocols = posnet::FrameFilter::GetSupportedProtocols();
+            for (const auto& protocol : anyProtocols) {
+                filter.protocols.insert(std::string{ protocol });
+            }
+        }
+
+        if (filter.protocols.find("tcp") != filter.protocols.cend() ||
+                filter.protocols.find("udp") != filter.protocols.cend() ||
+                filter.protocols.find("icmp") != filter.protocols.cend()) {
+            for (const auto& protocol : {"eth", "ip"}) {
+                filter.protocols.insert(protocol);
+            }
+        }
+
+        if (filter.protocols.find("arp") != filter.protocols.cend() ||
+                filter.protocols.find("rarp") != filter.protocols.cend()) {
+            for (const auto& protocol : {"eth"}) {
+                filter.protocols.insert(protocol);
+            }
+        }
+    }
     return filter;
+}
+
+void OnCapturedFrame(
+    std::ostream& os, 
+    const posnet::BaseFrame& baseFrame, 
+    const posnet::FrameFilter::ProtocolType protocol,
+    const int level
+) {
+    using ProtocolType = posnet::FrameFilter::ProtocolType;
+    posnet::utils::ScopedLock lock([&os]{
+        os.flush();
+    });
+    const auto rawFrame = baseFrame.getAsRawFrameView();
+
+    if (level >= 1) {
+        os << posnet::EthernetViewer{ rawFrame } << std::endl;
+        if (level == 1) {
+            return;
+        }
+    }
+
+    // Already have printed ethernet level
+    if (level >= 2) {
+        if (protocol == ProtocolType::ARP || protocol == ProtocolType::RARP) {
+            os << posnet::ArpViewer{ rawFrame } << std::endl;
+        } else {
+            switch (protocol) {
+                case ProtocolType::IP:
+                case ProtocolType::TCP:
+                case ProtocolType::UDP:
+                case ProtocolType::ICMP: {
+                    os << posnet::IpViewer{ rawFrame } << std::endl;
+                    break;
+                }
+                default: {
+                    //! Do nothing
+                    break;
+                }
+            }   
+        }
+
+        if (level == 2) {
+            return;
+        }
+    }
+
+    // Already have printed ip/arp level
+    if (level >= 3) {
+        const auto printPayload = [&os](const auto& payload) {
+            os << "Payload(ASCI) {" << "\n"; 
+            os << std::string_view{ (char*)(payload.data()), payload.size() };
+            os << "\n}\n";
+
+            os << "Payload(HEX) {" << "\n";
+            //posnet::utils::DumpToHexFormat(os, payload);
+            os << "\n}\n";
+        };
+
+        switch (protocol) {
+            case ProtocolType::TCP: {
+                const posnet::TcpViewer tcp{ rawFrame };
+                os << tcp << std::endl;
+                printPayload(tcp.getPayload());
+                break;
+            }
+            case ProtocolType::UDP: {
+                const posnet::UdpViewer udp{ rawFrame };
+                os << udp << std::endl;
+                printPayload(udp.getPayload());
+                break;
+            }
+            case ProtocolType::ICMP: {
+                os << posnet::IcmpViewer{ rawFrame } << std::endl;
+                break;
+            }
+            default: {
+                //! Do nothing
+                break;
+            }
+        }
+    }
+
+    // Already have printed tcp/udp/icmp level
+    if (level == 4) {
+        //! TODO:
+    }
 }
 
 int main(int argc, char** argv) {
     try {
         posnet::utils::args::Parser parser(argc, argv);
         (void)parser.addArgPattern("--help")
+            .addArgPattern("--debug")
+            .addArgPattern("--out-file")
             .addArgPattern("--port")
             .addArgPattern("--port-src")
             .addArgPattern("--port-dst")
@@ -257,6 +281,16 @@ int main(int argc, char** argv) {
             return EXIT_SUCCESS;
         }
 
+        std::ostream* outStream = nullptr;
+        if (parser.hasArg("--out-file")) {
+            const auto outFilePath = parser.getArgValue<std::string>("--out-file", '=').value_or(".");
+            static std::ofstream fileStream(outFilePath.c_str());
+            ASSERTION(fileStream.is_open(), std::runtime_error, "Could not open out file by path" + outFilePath);
+            outStream = &fileStream;
+        } else {
+            outStream = &std::cout;
+        }
+
         {
             const auto ifConfig = posnet::GetFirstNonLoopbackIface();
             ASSERTION(ifConfig, std::runtime_error, "Could not find non loopback iface")
@@ -267,31 +301,20 @@ int main(int argc, char** argv) {
         }
 
         const auto filter = GetFilter(std::move(parser));
-        const auto sockfd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
-        if (sockfd < 0) {
-            std::cerr << "Could not create socket for listening" << std::endl;
-            return EXIT_FAILURE;
+        if (parser.hasArg("--debug")) {
+            std::cout << filter << std::endl;
         }
 
-        posnet::utils::ScopedLock lock([sockfd]{ close(sockfd); });
-        std::array<posnet::def::ByteType, 65536> buffer = {0};
-        struct sockaddr sockaddr;
-        std::memset(&sockaddr, 0, sizeof(sockaddr));
-        socklen_t sockaddrSize = sizeof(sockaddr);
-
-        while (true) {
-            const std::size_t bufferSize = recvfrom(sockfd, buffer.data(), buffer.size(), 0, &sockaddr, &sockaddrSize);
-            if (bufferSize < 0) {
-                std::cerr << "Failed to get packets" << std::endl;
-                return EXIT_FAILURE;
-            }
-
-            std::stringstream ss;
-            if (ParseCapturedFrame(ConstRawFrameViewType{ buffer.data(), bufferSize}, filter, ss)) {
-                std::cout << ss.str() << std::endl;
-            }
-        }
-
+        posnet::FrameCapturer capturer;
+        capturer.capture(filter, [&os = *outStream](
+            const posnet::BaseFrame& baseFrame, 
+            const posnet::FrameFilter::ProtocolType protocol,
+            const int level
+            ) {
+            OnCapturedFrame(os, baseFrame, protocol, level);
+            return posnet::FrameCapturer::CONTINUE_CAPTURING;
+        });
+        
         return EXIT_SUCCESS;
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;

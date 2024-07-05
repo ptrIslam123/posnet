@@ -22,26 +22,20 @@ TcpViewer::TcpViewer(RawFrameViewType rawFrame):
 BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(rawFrame.data()), rawFrame.size()),
 m_frame(nullptr)
 {
-    const auto ethernetHeaderLength = EthernetViewer::DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES;
-    const auto ipHeaderLength = IpViewer(RawFrameViewType{
-        rawFrame.data() + ethernetHeaderLength, 
-        rawFrame.size() - ethernetHeaderLength 
-    }).getHeaderLengthInBytes();
-
-    m_frame = reinterpret_cast<HeaderStructType*>(rawFrame.data() + ethernetHeaderLength + ipHeaderLength);
+    const IpViewer ipViewer{ rawFrame };
+    m_frame = reinterpret_cast<HeaderStructType*>(
+                const_cast<BaseFrame::ByteType*>(ipViewer.getHeaderStart() + ipViewer.getHeaderLengthInBytes())
+    );
 }
 
 TcpViewer::TcpViewer(ConstRawFrameViewType rawFrame):
 BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(rawFrame.data()), rawFrame.size()),
 m_frame(nullptr)
 {
-    const auto ethernetHeaderLength = EthernetViewer::DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES;
-    const auto ipHeaderLength = IpViewer(ConstRawFrameViewType{
-        rawFrame.data() + ethernetHeaderLength, 
-        rawFrame.size() - ethernetHeaderLength 
-    }).getHeaderLengthInBytes();
-    
-    m_frame = reinterpret_cast<HeaderStructType*>(const_cast<BaseFrame::ByteType*>(rawFrame.data() + ethernetHeaderLength + ipHeaderLength));
+    const IpViewer ipViewer{ rawFrame };
+    m_frame = reinterpret_cast<HeaderStructType*>(
+                const_cast<BaseFrame::ByteType*>(ipViewer.getHeaderStart() + ipViewer.getHeaderLengthInBytes())
+    );
 }
 
 TcpViewer::PortType TcpViewer::getSourcePort()

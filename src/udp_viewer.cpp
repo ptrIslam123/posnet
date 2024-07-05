@@ -14,14 +14,21 @@ m_frame(reinterpret_cast<HeaderStructType*>(
 
 UdpViewer::UdpViewer(const RawFrameViewType rawFrame):
 BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(rawFrame.data()), DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES),
-m_frame(reinterpret_cast<HeaderStructType*>(rawFrame.data()))
-{}
+m_frame(nullptr)
+{
+    const IpViewer ipViewer{ rawFrame };
+    m_frame = reinterpret_cast<HeaderStructType*>(
+                const_cast<BaseFrame::ByteType*>(ipViewer.getHeaderStart() + ipViewer.getHeaderLengthInBytes()));
+}
 
 UdpViewer::UdpViewer(const ConstRawFrameViewType rawFrame):
 BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(rawFrame.data()), DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES),
-m_frame(reinterpret_cast<HeaderStructType*>(
-    const_cast<RawFrameViewType::value_type*>(rawFrame.data())))
-{}
+m_frame(nullptr)
+{
+    const IpViewer ipViewer{ rawFrame };
+    m_frame = reinterpret_cast<HeaderStructType*>(
+                const_cast<BaseFrame::ByteType*>(ipViewer.getHeaderStart() + ipViewer.getHeaderLengthInBytes()));
+}
 
 UdpViewer::PortType UdpViewer::getSourcePort()
 {

@@ -14,23 +14,27 @@ namespace
 
 namespace posnet::utils {
 
-void DumpToHexFormat(std::ostream& os, std::span<std::uint8_t> data)
+void DumpToHexFormat(std::ostream& os, std::span<std::uint8_t> data, const int lineSize)
 {
-    DumpToHexFormat(os, std::span<const std::uint8_t>(data));
+    DumpToHexFormat(os, std::span<const std::uint8_t>{ reinterpret_cast<const std::uint8_t*>(data.data()), data.size() }, lineSize);
 }
 
-void DumpToHexFormat(std::ostream& os, const std::span<const std::uint8_t> data)
+void DumpToHexFormat(std::ostream& os, const std::span<const std::uint8_t> data, const int lineSize)
 {
     std::ios_base::fmtflags f(os.flags());
     os << std::hex << std::setfill('0');
-    for (size_t i = 0; i < data.size(); ++i) {
+    for (auto i = 0; i < data.size(); ++i) {
+        if (i % lineSize == 0) {
+            os << "\n";
+        }
+
         os << std::setw(2) << static_cast<unsigned>(data[i]) << " ";
     }
     os << std::endl;
     os.flags(f);
 }
 
-std::vector<std::string> SplitString(const std::string& str, char delimiter)
+std::vector<std::string> SplitString(const std::string& str, const char delimiter)
 {
     std::vector<std::string> tokens;
     std::string token;

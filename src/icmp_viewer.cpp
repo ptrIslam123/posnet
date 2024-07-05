@@ -6,7 +6,7 @@
 
 namespace {
 
-posnet::IcmpViewer::PackageType ExtractPackageType(const unsigned char type)
+posnet::IcmpViewer::PackageType ExtractPackageType(const std::uint8_t type)
 {
     using PackageType = posnet::IcmpViewer::PackageType;
     switch (type) {
@@ -38,7 +38,7 @@ posnet::IcmpViewer::PackageType ExtractPackageType(const unsigned char type)
 }
 
 posnet::IcmpViewer::PackageCode 
-ExtractPackageCode(const posnet::IcmpViewer::PackageType type, const unsigned char code)
+ExtractPackageCode(const posnet::IcmpViewer::PackageType type, const std::uint8_t code)
 {
     using PackageCode = posnet::IcmpViewer::PackageCode;
     using PackageType = posnet::IcmpViewer::PackageType;
@@ -193,14 +193,23 @@ m_frame(reinterpret_cast<HeaderStructType*>(
 
 IcmpViewer::IcmpViewer(const ConstRawFrameViewType rawFrame):
 BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(rawFrame.data()), DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES),
-m_frame(reinterpret_cast<HeaderStructType*>(
-    const_cast<RawFrameViewType::value_type*>(rawFrame.data())))
-{}
+m_frame(nullptr)
+{
+    const IpViewer ipViewer{ rawFrame };
+    m_frame = reinterpret_cast<HeaderStructType*>(
+                const_cast<BaseFrame::ByteType*>(ipViewer.getStart() + ipViewer.getHeaderLengthInBytes())
+    );
+}
 
 IcmpViewer::IcmpViewer(const RawFrameViewType rawFrame):
 BaseFrame(reinterpret_cast<const BaseFrame::ByteType*>(rawFrame.data()), DEFAULT_FRAME_HEADER_LENGTH_IN_BYTES),
-m_frame(reinterpret_cast<HeaderStructType*>(rawFrame.data()))
-{}
+m_frame(nullptr)
+{
+    const IpViewer ipViewer{ rawFrame };
+    m_frame = reinterpret_cast<HeaderStructType*>(
+                const_cast<BaseFrame::ByteType*>(ipViewer.getStart() + ipViewer.getHeaderLengthInBytes())
+    );
+}
 
 IcmpViewer::PackageType IcmpViewer::getType()
 {
